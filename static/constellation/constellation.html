@@ -295,40 +295,40 @@ function initConstellation(newTurnsData, resetAnimation = false) {
     }
     returnRibbons = {};
     
-    // 2. Update global TURNS and re-process into stars
-    TURNS = newTurnsData;
-    stars = [];
+  // 2. Update global TURNS and re-process into stars
+  TURNS = newTurnsData;
+  stars = [];
 
-    TURNS.forEach((turnData, i) => {
-      const {
-        id,
-        speaker,
-        text,
-        phase = 1,
-        coherence: coh = 0.9,
-        alignment: ali = 0.9,
-        ref = 0,
-        fracture: frac = false
-      } = turnData;
+  TURNS.forEach((turnData, i) => {
+    const {
+      id = i + 1,
+      speaker = "user",
+      text = "Demo text",
+      phase = 1,
+      coherence: coh = 0.9,
+      alignment: ali = 0.9,
+      ref = 0,
+      fracture: frac = false
+    } = turnData || {};
 
-      // 🧭 Determine position
-      let pos; // ← declare once
+    // 🧭 Determine position
+    let pos; // declare once
 
-      if (turnData.pca && Array.isArray(turnData.pca)) {
-        // Use PCA coordinates from /analyze if available
-        const [x, y, z] = turnData.pca;
-        pos = new THREE.Vector3(x * 80, y * 80, z * 80);
-      } else {
-        // Fall back to legacy polar placement
-        const radiusBase = 70,
-              radiusSpan = 72,
-              angleStep = (Math.PI * 2) / (TURNS.length + 6);
-        const r = radiusBase + (1 - coh) * radiusSpan;
-        const a = (i + 1) * angleStep;
-        pos = new THREE.Vector3(Math.cos(a) * r, Math.sin(a) * r, (coh - 0.5) * 60);
-      }
+    if (turnData?.pca && Array.isArray(turnData.pca)) {
+      // Use PCA coordinates from /analyze if available
+      const [x, y, z] = turnData.pca;
+      pos = new THREE.Vector3(x * 80, y * 80, z * 80);
+    } else {
+      // Fall back to legacy polar placement
+      const radiusBase = 70,
+            radiusSpan = 72,
+            angleStep = (Math.PI * 2) / (TURNS.length + 6);
+      const r = radiusBase + (1 - coh) * radiusSpan;
+      const a = (i + 1) * angleStep;
+      pos = new THREE.Vector3(Math.cos(a) * r, Math.sin(a) * r, (coh - 0.5) * 60);
+    }
 
-    // 🌌 Build the star directly (no external helper)
+    // 🌌 Build the star object with safe defaults for all metrics
     const star = {
       id,
       speaker,
@@ -338,16 +338,21 @@ function initConstellation(newTurnsData, resetAnimation = false) {
       phase,
       ref,
       pos,
-      drift: turnData.drift ?? 0,
-      entropy: turnData.entropy ?? 0,
-      cluster: turnData.cluster ?? 0,
-      resonance: turnData.resonance ?? 0,
-      volatility: turnData.volatility ?? 0,
-      novelty: turnData.novelty ?? 0
+
+      // --- Expanded metrics with neutral demo defaults ---
+      drift: turnData?.drift ?? ali * 0.5,
+      entropy: turnData?.entropy ?? 0.15 + 0.05 * Math.sin(i), // gentle variation
+      cluster: turnData?.cluster ?? (i % 5),
+      resonance: turnData?.resonance ?? 0.6 + 0.1 * Math.cos(i),
+      volatility: turnData?.volatility ?? 0.2 + 0.05 * Math.sin(i * 2),
+      novelty: turnData?.novelty ?? 0.1 + 0.05 * Math.cos(i * 1.5),
+
+      // Optional PCA for demo rendering
+      pca: turnData?.pca ?? [Math.cos(i), Math.sin(i), 0]
     };
 
     stars.push(star);
-    });
+  });
 
 
     // 3. Rebuild star geometry
