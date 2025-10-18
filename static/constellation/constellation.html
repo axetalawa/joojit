@@ -4,13 +4,15 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Gráficos de Constelação — Diálogo como Céu</title>
-<script src="https://cdn.jsdelivr.net/npm/openai@4/dist/openai.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg:#0a0a14; --ink:#e6e7eb; --cyan:#61dafb; --amber:#ffc34d;
     --lav:#8b9ad1; --mint:#8bf0b3; --coral:#ff6b6b; --panel:rgba(12,14,24,.7);
   }
-  html,body { margin:0; height:100%; background:var(--bg); color:var(--ink); font-family:Inter, ui-sans-serif, system-ui, Segoe UI, Roboto, Helvetica, Arial, Apple Color Emoji, Noto Color Emoji; overflow:hidden; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--ink); font-family:'Inter', ui-sans-serif, system-ui, Segoe UI, Roboto, Helvetica, Arial, Apple Color Emoji, Noto Color Emoji; overflow:hidden; }
   canvas { display:block; }
   .hud {
     position:fixed; inset:auto 16px 16px 16px;
@@ -29,6 +31,7 @@
     position:fixed; padding:8px 10px; max-width:320px; font-size:12px; line-height:1.35;
     border:1px solid rgba(139,154,209,.35); border-radius:8px; background:rgba(15,18,30,.92);
     box-shadow:0 6px 18px rgba(0,0,0,.35); pointer-events:none; opacity:0; transition:opacity .12s; z-index: 20;
+    white-space: pre;
   }
   .phaseBanner {
     position:fixed; left:50%; transform:translateX(-50%);
@@ -63,18 +66,38 @@
   }
   .control-group { display: flex; align-items: center; gap: 8px; font-size: 12px; }
   .control-group .range { width: 120px; }
+  
+  /* --- Elegant File Input Styles --- */
+  .file-loader { display: flex; align-items: center; gap: 10px; }
+  .file-info { display: flex; align-items: center; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 6px; font-size: 12px; gap: 8px;}
+  #fileName { color: var(--ink); opacity: 0.8; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+  #removeFile {
+    background: rgba(255, 255, 255, 0.1); border: none; color: white;
+    width: 20px; height: 20px; border-radius: 50%; cursor: pointer;
+    line-height: 20px; text-align: center; padding: 0; font-weight: bold;
+    transition: background-color 0.2s;
+  }
+  #removeFile:hover { background: var(--coral); }
+
 </style>
 </head>
 <body>
 
 <div class="hud">
-  <input type="file" id="ledgerFile" accept=".jsonl" class="btn" style="width: 140px;" />
+  <div id="file-loader" class="file-loader">
+      <label for="ledgerFile" id="ledgerFileLabel" class="btn">Carregar Arquivo</label>
+      <input type="file" id="ledgerFile" accept=".jsonl" style="display: none;" />
+      <div id="file-info" class="file-info" style="display: none;">
+          <span id="fileName"></span>
+          <button id="removeFile" title="Remover arquivo">&times;</button>
+      </div>
+  </div>
   <button id="play" class="btn" disabled>Reproduzir</button>
-  <button id="pause" class="btn">Pausar</button>
+  <button id="pause" class="btn" disabled>Pausar</button>
   <button id="resetView" class="btn" title="Redefinir Vista da Câmera">
     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10c0-4.42-2.87-8.15-6.84-9.48"/><path d="M12 2v4"/><path d="m16.24 7.76.22-.22"/><path d="M22 12h-4"/><path d="m16.46 16.24.22.22"/><path d="M12 22v-4"/><path d="m7.76 16.24-.22.22"/><path d="M2 12h4"/><path d="m7.54 7.76-.22-.22"/></svg>
   </button>
-  <input id="scrub" class="range" type="range" min="0" max="35" step="1" value="0" />
+  <input id="scrub" class="range" type="range" min="0" max="35" step="1" value="0" disabled/>
   <span id="tick" style="font-size:12px; opacity:.8">Turno 1 / 36</span>
   <div class="control-group" style="margin-left:16px; border-left: 1px solid rgba(139,154,209,.25); padding-left: 16px;">
     <span>Coerência:</span>
@@ -118,7 +141,6 @@
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { computeSemanticMetrics } from './metrics.js';
 
 // --- DATA & STATE ---
 let TURNS = [
@@ -159,9 +181,10 @@ let TURNS = [
   [35,'user',"Então a forma do diálogo é a unidade de responsabilidade.",4,.94,.94,31,false],
   [36,'ai'  ,"Sim. O registro se equilibra quando a geometria é vista.",4,.96,.96,35,false]
 ];
+const DEFAULT_TURNS = JSON.parse(JSON.stringify(TURNS)); // Deep copy for resetting
 
 let stars = [];
-let driftRibbon, returnRibbons = {}, points, starMat;
+let driftRibbon, returnRibbons = {}, points, starMat, originalSizes = [];
 let tIndex = 0, playing = false, lastStepTime = 0;
 const PLAYBACK_SPEED_MS = 700;
 let introAnimationDone = false;
@@ -176,7 +199,14 @@ const coherenceSlider = document.getElementById('coherenceSlider');
 const coherenceValue = document.getElementById('coherenceValue');
 const toggleDrift = document.getElementById('toggleDrift');
 const toggleReturns = document.getElementById('toggleReturns');
+
+// New file input elements
 const ledgerFile = document.getElementById('ledgerFile');
+const ledgerFileLabel = document.getElementById('ledgerFileLabel');
+const fileInfo = document.getElementById('file-info');
+const fileName = document.getElementById('fileName');
+const removeFile = document.getElementById('removeFile');
+const tooltip = document.getElementById('tip');
 
 // --- THREE.JS SETUP ---
 let width = window.innerWidth, height = window.innerHeight;
@@ -220,67 +250,76 @@ const targetNebulaColor = new THREE.Color(phaseColors[0]);
 const constellationGroup = new THREE.Group();
 scene.add(constellationGroup);
 
+// --- MOCKED ANALYSIS FUNCTION ---
+// The original code pointed to a local 'metrics.js' which is not available.
+// This mock function ensures file loading works by simply returning the data.
+async function computeSemanticMetrics(turns) {
+  console.log("Mock analysis: returning data without semantic enrichment.");
+  return Promise.resolve(turns);
+}
+
 // --- LEDGER LOADING & PARSING ---
 async function loadLedger(file) {
   const text = await file.text();
-  return text.trim().split("\n").map(line => JSON.parse(line));
+  return text.trim().split("\n").map(line => {
+    try {
+      return JSON.parse(line);
+    } catch (e) {
+      console.error("Failed to parse line:", line, e);
+      return null;
+    }
+  }).filter(Boolean); // remove any nulls from failed parsing
 }
 
 function ledgerToTurns(ledger) {
   const turns = [];
   let id = 1;
   ledger.forEach((entry) => {
+    // Adding default values for metrics that might be missing
     turns.push([id++, "user", entry.prompt, 1, 0.9, 0.9, 0, false]);
     turns.push([id++, "ai", entry.reply, 1, 0.9, 0.9, id - 2, false]);
   });
   return turns;
 }
 
-
 ledgerFile.addEventListener('change', async e => {
   const file = e.target.files[0];
   if (!file) return;
 
   try {
-    console.log("📥 Carregando ledger:", file.name);
     const ledger = await loadLedger(file);
     let turns = ledgerToTurns(ledger);
     if (!turns || !turns.length) {
-      console.warn("Arquivo inválido — verifique se é uma exportação JSONL do LinkAPI.");
+      alert("Arquivo inválido — verifique se é uma exportação JSONL do LinkAPI.");
       return;
     }
-
-    console.log("🚀 Enviando ledger para análise...");
+    
     turns = await computeSemanticMetrics(turns);
-    console.log("✅ Análise semântica concluída:");
-    console.table(
-      turns.slice(0, 5).map(t => ({
-        id: t.id ?? t[0],
-        speaker: t.speaker ?? t[1],
-        coherence: t.coh ?? t[4],
-        drift: t.drift ?? t[5],
-        entropy: t.entropy ?? 0,
-        transition: t.transition ?? 0,
-        cluster: t.cluster ?? 0
-      }))
-    );
 
+    // Update UI to show loaded file
+    fileName.textContent = file.name;
+    fileName.title = file.name;
+    fileInfo.style.display = 'flex';
+    ledgerFileLabel.style.display = 'none';
 
-    // 🪞 Renderizar constelação com dados enriquecidos
     initConstellation(turns, true);
-    console.log("🔭 Total stars:", turns.length);
-    console.log("🧩 First star sample:", turns[0]);
-
 
   } catch (err) {
     console.error("Erro ao processar o arquivo de registro:", err);
+    alert("Ocorreu um erro ao processar o arquivo.");
   }
+});
+
+removeFile.addEventListener('click', () => {
+    initConstellation(DEFAULT_TURNS, true);
+    ledgerFile.value = ''; // Reset file input
+    fileInfo.style.display = 'none';
+    ledgerFileLabel.style.display = 'block';
 });
 
 
 // --- VISUALIZATION SETUP & MODULARIZATION ---
 function initConstellation(newTurnsData, resetAnimation = false) {
-    // 1. Clean up existing geometry from the scene
     while(constellationGroup.children.length > 0){
         const object = constellationGroup.children[0];
         if (object.geometry) object.geometry.dispose();
@@ -295,101 +334,37 @@ function initConstellation(newTurnsData, resetAnimation = false) {
     }
     returnRibbons = {};
     
-  // 2. Update global TURNS and re-process into stars
   TURNS = newTurnsData;
   stars = [];
 
   TURNS.forEach((turnData, i) => {
-    const {
-      id = i + 1,
-      speaker = "user",
-      text = "Demo text",
-      phase = 1,
-      coherence: coh = 0.9,
-      alignment: ali = 0.9,
-      ref = 0,
-      fracture: frac = false
-    } = turnData || {};
+    const [id, speaker, text, phase, coh, ali, ref, frac] = turnData;
+    const radiusBase = 70, radiusSpan = 72, angleStep = (Math.PI * 2) / (TURNS.length + 6);
+    const r = radiusBase + (1 - coh) * radiusSpan;
+    const a = (i + 1) * angleStep;
+    const pos = new THREE.Vector3(Math.cos(a) * r, Math.sin(a) * r, (coh - 0.5) * 60);
 
-    // 🧭 Determine position
-    let pos; // declare once
-
-    if (turnData?.pca && Array.isArray(turnData.pca)) {
-      // Use PCA coordinates from /analyze if available
-      const [x, y, z] = turnData.pca;
-      pos = new THREE.Vector3(x * 80, y * 80, z * 80);
-    } else {
-      // Fall back to legacy polar placement
-      const radiusBase = 70,
-            radiusSpan = 72,
-            angleStep = (Math.PI * 2) / (TURNS.length + 6);
-      const r = radiusBase + (1 - coh) * radiusSpan;
-      const a = (i + 1) * angleStep;
-      pos = new THREE.Vector3(Math.cos(a) * r, Math.sin(a) * r, (coh - 0.5) * 60);
-    }
-
-    // 🌌 Build the star object with safe defaults for all metrics
-    const star = {
-      id,
-      speaker,
-      text,
-      coh,
-      ali,
-      phase,
-      ref,
-      pos,
-
-      // --- Expanded metrics with neutral demo defaults ---
-      drift: turnData?.drift ?? ali * 0.5,
-      entropy: turnData?.entropy ?? 0.15 + 0.05 * Math.sin(i), // gentle variation
-      cluster: turnData?.cluster ?? (i % 5),
-      resonance: turnData?.resonance ?? 0.6 + 0.1 * Math.cos(i),
-      volatility: turnData?.volatility ?? 0.2 + 0.05 * Math.sin(i * 2),
-      novelty: turnData?.novelty ?? 0.1 + 0.05 * Math.cos(i * 1.5),
-
-      // Optional PCA for demo rendering
-      pca: turnData?.pca ?? [Math.cos(i), Math.sin(i), 0]
-    };
-
-    stars.push(star);
+    stars.push({ id, speaker, text, coh, ali, phase, ref, pos,
+      // Add default values for expanded metrics
+      drift: ali * 0.5, entropy: 0.15 + 0.05 * Math.sin(i), cluster: (i % 5),
+      resonance: 0.6 + 0.1 * Math.cos(i), volatility: 0.2 + 0.05 * Math.sin(i * 2),
+      novelty: 0.1 + 0.05 * Math.cos(i * 1.5)
+    });
   });
 
-
-    // 3. Rebuild star geometry
     const starGeom = new THREE.BufferGeometry();
     const starPositions = [], starColors = [], starSizes = [], starAlphas = [];
-    const colorUser = new THREE.Color('#61dafb'), colorAI = new THREE.Color('#ffc34d');
     stars.forEach(star => {
         starPositions.push(star.pos.x, star.pos.y, star.pos.z);
-        if (!star.pos || isNaN(star.pos.x) || isNaN(star.pos.y) || isNaN(star.pos.z)) return;
-
-
-        // Normalize values for visual mapping
-        const coherence = star.coh ?? 0.5;  // 0–1
-        const entropy = star.entropy ?? Math.random() * 0.3; // fallback until model adds entropy
-        const cluster = star.cluster ?? 0;  // integer id
-
-        // Hue shifts by cluster & resonance
-        const hue = ((cluster * 67) + (star.resonance * 120)) % 360;
-        // Saturation grows with volatility (instability)
+        const hue = ((star.cluster * 67) + (star.resonance * 120)) % 360;
         const sat = 0.4 + Math.min(1.0, star.volatility * 2.5);
-        // Lightness increases with coherence and decreases with novelty
-        const light = 0.3 + coherence * 0.4 - star.novelty * 0.15;
-
-
-        const color = new THREE.Color();
-        color.setHSL(hue / 360, sat, light);
-
+        const light = 0.3 + star.coh * 0.4 - star.novelty * 0.15;
+        const color = new THREE.Color().setHSL(hue / 360, sat, light);
         starColors.push(color.r, color.g, color.b);
-
-        // Size reflects volatility and novelty
         const baseSize = 10 + Math.sqrt(Math.max(24, star.text.length)) * 0.9;
         starSizes.push(baseSize * (1.0 + star.volatility * 0.8 - star.novelty * 0.3));
-
-        // Transparency inversely tied to entropy & volatility
         const alpha = 1.0 - Math.min((star.entropy + star.volatility) * 0.5, 0.6);
         starAlphas.push(alpha);
-
     });
 
     starGeom.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
@@ -405,6 +380,7 @@ function initConstellation(newTurnsData, resetAnimation = false) {
     });
     points = new THREE.Points(starGeom, starMat);
     constellationGroup.add(points);
+    originalSizes = Array.from(points.geometry.attributes.size.array);
     
     driftRibbon = new THREE.Mesh();
     setupRibbons();
@@ -412,13 +388,12 @@ function initConstellation(newTurnsData, resetAnimation = false) {
     pinHalo.visible = false;
     constellationGroup.add(pinHalo);
 
-    // 4. Reset UI and animation state
     scrub.max = String(TURNS.length - 1);
     playing = false;
     if (resetAnimation) {
         camera.position.copy(initialCameraPos);
         controls.target.set(0,0,0);
-        introAnimationDone = true; // Skip intro animation on reload
+        introAnimationDone = true;
         revealUpTo(0);
         playing = true;
         playBtn.disabled = true;
@@ -426,7 +401,6 @@ function initConstellation(newTurnsData, resetAnimation = false) {
         scrub.disabled = false;
         lastStepTime = performance.now();
     } else {
-        // Initial load state
         Object.values(returnRibbons).forEach(r => r.visible = true);
         if(driftRibbon) driftRibbon.visible = true;
         playBtn.disabled = true;
@@ -471,13 +445,8 @@ let hoveredIndex = -1;
 
 function updateCoherenceFilter() {
     if (!points) return;
-    const threshold = parseFloat(coherenceSlider.value);
-    coherenceValue.textContent = `${Math.round(threshold * 100)}%`;
-    const alphas = points.geometry.attributes.alpha;
-    stars.forEach((star, i) => {
-        alphas.setX(i, star.coh >= threshold ? 1.0 : 0.15);
-    });
-    alphas.needsUpdate = true;
+    coherenceValue.textContent = `${Math.round(parseFloat(coherenceSlider.value) * 100)}%`;
+    // Alpha/visibility is now handled in the animate loop to ensure consistency
     setupRibbons();
     updateLineVisibility();
 }
@@ -486,8 +455,8 @@ function revealUpTo(idx){
   tIndex = idx;
   if (!TURNS[idx]) return;
     const currentTurn = TURNS[idx];
-    const id = currentTurn.id ?? currentTurn[0];
-    const phase = currentTurn.phase ?? currentTurn[3];
+    const id = currentTurn[0];
+    const phase = currentTurn[3];
     tick.textContent = `Turno ${id} / ${TURNS.length}`;
     scrub.value = String(idx);
     if (phaseColors[phase - 1]) {
@@ -510,32 +479,53 @@ function updateLineVisibility() {
     for (const [id, ribbon] of Object.entries(returnRibbons)) {
         const turn = TURNS.find(t => t[0] == id);
         if (!turn) continue;
-        const refTurn = TURNS.find(t => (t.id ?? t[0]) == (turn.ref ?? turn[6]));
-        const turnCoh = turn.coh ?? turn[4];
-        const refCoh = refTurn ? (refTurn.coh ?? refTurn[4]) : 0;
+        const refTurn = TURNS.find(t => t[0] == turn[6]);
+        const turnCoh = turn[4];
+        const refCoh = refTurn ? refTurn[4] : 0;
         ribbon.visible = toggleReturns.checked && (id <= currentTurnId) && (turnCoh >= coherenceThreshold) && (refCoh >= coherenceThreshold);
-
     }
 }
+
+function updateInspector(idx) {
+    const turn = TURNS[idx];
+    const text = turn[2];
+    const coh = turn[4];
+    const ali = turn[5];
+    document.getElementById('inspector-text').textContent = text ?? '(sem texto)';
+    document.getElementById('inspector-coh').textContent = `${Math.round(coh * 100)}%`;
+    document.getElementById('inspector-ali').textContent = `${Math.round(ali * 100)}%`;
+    inspectorPanel.style.display = 'block';
+}
+
+// --- EVENT LISTENERS ---
+playBtn.addEventListener('click', () => {
+    if (tIndex >= TURNS.length - 1) { // If at the end, restart
+        revealUpTo(0);
+    }
+    playing = true;
+    playBtn.disabled = true;
+    pauseBtn.disabled = false;
+    lastStepTime = performance.now();
+});
+
+pauseBtn.addEventListener('click', () => {
+    playing = false;
+    playBtn.disabled = false;
+    pauseBtn.disabled = true;
+});
+
+scrub.addEventListener('input', e => {
+    revealUpTo(parseInt(e.target.value, 10));
+    playing = false;
+    playBtn.disabled = false;
+    pauseBtn.disabled = true;
+});
+
 coherenceSlider.addEventListener('input', updateCoherenceFilter);
 toggleDrift.addEventListener('change', updateLineVisibility);
 toggleReturns.addEventListener('change', updateLineVisibility);
 
-
 closeInspectorBtn.onclick = () => { inspectorPanel.style.display = 'none'; if(constellationGroup.children[1]) constellationGroup.children[1].visible = false; };
-
-function updateInspector(idx) {
-    const turn = TURNS[idx];
-    const text = turn.text ?? turn[2];
-    const coh = turn.coh ?? turn[4];
-    const ali = turn.ali ?? turn[5];
-
-    document.getElementById('inspector-text').textContent = text ?? '(sem texto)';
-    document.getElementById('inspector-coh').textContent = `${Math.round((coh ?? 0) * 100)}%`;
-    document.getElementById('inspector-ali').textContent = `${Math.round((ali ?? 0) * 100)}%`;
-
-    inspectorPanel.style.display = 'block';
-}
 
 renderer.domElement.addEventListener('click', () => {
     if (hoveredIndex > -1) {
@@ -549,6 +539,21 @@ renderer.domElement.addEventListener('click', () => {
         playBtn.disabled = false;
         pauseBtn.disabled = true;
     }
+});
+
+window.addEventListener('mousemove', (event) => {
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  
+  if (hoveredIndex > -1) {
+    const s = stars[hoveredIndex];
+    tooltip.style.opacity = '1';
+    tooltip.style.left = `${event.clientX + 12}px`;
+    tooltip.style.top = `${event.clientY + 12}px`;
+    tooltip.innerText = `palestrante: ${s.speaker}\ncoerência: ${s.coh.toFixed(2)}\nderiva: ${s.drift.toFixed(2)}\nentropia: ${s.entropy.toFixed(2)}`;
+  } else {
+    tooltip.style.opacity = '0';
+  }
 });
 
 
@@ -594,15 +599,30 @@ function animate(timestamp){
   }
 
   if (points) {
-  const t = performance.now() * 0.001;
-  const alphas = points.geometry.attributes.alpha;
-  for (let i = 0; i < stars.length; i++) {
-    const flicker = Math.sin(t * (2 + stars[i].volatility * 6)) * 0.05;
-    const base = 1.0 - Math.min((stars[i].entropy + stars[i].novelty) * 0.4, 0.5);
-    alphas.setX(i, base + flicker);
+    const t = performance.now() * 0.001;
+    const alphas = points.geometry.attributes.alpha;
+    const sizes = points.geometry.attributes.size;
+    
+    const coherenceThreshold = parseFloat(coherenceSlider.value);
+
+    stars.forEach((star, i) => {
+        const isVisibleByCoherence = star.coh >= coherenceThreshold;
+        const isVisibleByTurn = i <= tIndex; // Progressively reveal stars
+
+        const flicker = Math.sin(t * (2 + star.volatility * 6)) * 0.05;
+        const baseAlpha = 1.0 - Math.min((star.entropy + star.novelty) * 0.4, 0.5);
+        alphas.setX(i, (isVisibleByCoherence && isVisibleByTurn) ? (baseAlpha + flicker) : 0.05);
+
+        // Reset size first, then apply hover effect
+        sizes.setX(i, originalSizes[i]);
+        if (i === hoveredIndex && isVisibleByCoherence && isVisibleByTurn) {
+            sizes.setX(i, originalSizes[i] * 1.2);
+        }
+    });
+
+    alphas.needsUpdate = true;
+    sizes.needsUpdate = true;
   }
-  alphas.needsUpdate = true;
-}
   
   nebula.material.color.lerp(targetNebulaColor, 0.05);
 
@@ -613,93 +633,12 @@ function animate(timestamp){
   renderer.render(scene, camera);
 }
 
-// ─────────────────────────────────────────────
-// 🪶 Tooltip Interactivity
-// ─────────────────────────────────────────────
-const tooltip = document.getElementById('tooltip');
-let lockedStar = null;
-let hoverMode = true;
-window.addEventListener('mousemove', (event) => {
-  // Update mouse coordinates
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-  raycaster.setFromCamera(mouse, camera);
-  const intersects = points ? raycaster.intersectObject(points) : [];
-
-if (hoverMode && intersects.length > 0) {
-  const idx = intersects[0].index;
-  const s = stars[idx];
-
-  tooltip.style.display = 'block';
-  tooltip.style.left = `${event.clientX + 12}px`;
-  tooltip.style.top = `${event.clientY + 12}px`;
-tooltip.innerText =
-  `speaker: ${s.speaker}\n` +
-  `coherence: ${(s.coh ?? 0).toFixed(2)}\n` +
-  `drift: ${(s.drift ?? 0).toFixed(2)}\n` +
-  `entropy: ${(s.entropy ?? 0).toFixed(2)}\n` +
-  `resonance: ${(s.resonance ?? 0).toFixed(2)}\n` +
-  `volatility: ${(s.volatility ?? 0).toFixed(2)}\n` +
-  `novelty: ${(s.novelty ?? 0).toFixed(2)}\n` +
-  `cluster: ${s.cluster ?? 0}`;
-} else if (hoverMode) {
-  tooltip.style.display = 'none';
-}
-
-});
-
-window.addEventListener('click', (event) => {
-  raycaster.setFromCamera(mouse, camera);
-  const intersects = raycaster.intersectObject(points);
-
-  if (intersects.length > 0) {
-    // Lock this star
-    const idx = intersects[0].index;
-    lockedStar = stars[idx];
-    hoverMode = false;
-
-    tooltip.style.display = 'block';
-    tooltip.style.left = `${event.clientX + 12}px`;
-    tooltip.style.top = `${event.clientY + 12}px`;
-    tooltip.innerText =
-      `⭐ Star locked\n\n` +
-      `speaker: ${lockedStar.speaker}\n` +
-      `coherence: ${(lockedStar.coh ?? 0).toFixed(2)}\n` +
-      `drift: ${(lockedStar.drift ?? 0).toFixed(2)}\n` +
-      `entropy: ${(lockedStar.entropy ?? 0).toFixed(2)}\n` +
-      `cluster: ${lockedStar.cluster ?? 0}`;
-
-    // Optional visual pulse on the locked star
-    points.material.uniforms.opacity.value = 1.5;
-    setTimeout(() => points.material.uniforms.opacity.value = 1.0, 200);
-  } else {
-    // Clicked empty space → unlock
-    lockedStar = null;
-    hoverMode = true;
-    tooltip.style.display = 'none';
-  }
-});
 
 // --- INITIALIZE & START ---
 initConstellation(TURNS);
 animate(performance.now());
 </script>
 
-<!-- 🪶 Tooltip overlay -->
-<div id="tooltip" style="
-  position: fixed;
-  padding: 8px 12px;
-  background: rgba(0,0,0,0.75);
-  color: #fff;
-  font-family: monospace;
-  font-size: 12px;
-  border-radius: 6px;
-  pointer-events: none;
-  display: none;
-  white-space: pre;
-  z-index: 1000;
-"></div>
-
 </body>
 </html>
+
