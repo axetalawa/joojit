@@ -268,6 +268,9 @@ ledgerFile.addEventListener('change', async e => {
 
     // 🪞 Renderizar constelação com dados enriquecidos
     initConstellation(turns, true);
+    console.log("🔭 Total stars:", turns.length);
+    console.log("🧩 First star sample:", turns[0]);
+
 
   } catch (err) {
     console.error("Erro ao processar o arquivo de registro:", err);
@@ -353,6 +356,8 @@ function initConstellation(newTurnsData, resetAnimation = false) {
     const colorUser = new THREE.Color('#61dafb'), colorAI = new THREE.Color('#ffc34d');
     stars.forEach(star => {
         starPositions.push(star.pos.x, star.pos.y, star.pos.z);
+        if (!star.pos || isNaN(star.pos.x) || isNaN(star.pos.y) || isNaN(star.pos.z)) return;
+
 
         // Normalize values for visual mapping
         const coherence = star.coh ?? 0.5;  // 0–1
@@ -480,7 +485,9 @@ function revealUpTo(idx){
     const phase = currentTurn.phase ?? currentTurn[3];
     tick.textContent = `Turno ${id} / ${TURNS.length}`;
     scrub.value = String(idx);
-    targetNebulaColor.copy(phaseColors[phase - 1]);
+    if (phaseColors[phase - 1]) {
+      targetNebulaColor.copy(phaseColors[phase - 1]);
+    }
   updateLineVisibility();
 }
 
@@ -595,7 +602,7 @@ function animate(timestamp){
   nebula.material.color.lerp(targetNebulaColor, 0.05);
 
   raycaster.setFromCamera(mouse, camera);
-  const intersects = raycaster.intersectObject(points);
+  const intersects = points ? raycaster.intersectObject(points) : [];
   hoveredIndex = intersects.length > 0 ? intersects[0].index : -1;
 
   renderer.render(scene, camera);
@@ -613,7 +620,7 @@ window.addEventListener('mousemove', (event) => {
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
   raycaster.setFromCamera(mouse, camera);
-  const intersects = raycaster.intersectObject(points);
+  const intersects = points ? raycaster.intersectObject(points) : [];
 
 if (hoverMode && intersects.length > 0) {
   const idx = intersects[0].index;
