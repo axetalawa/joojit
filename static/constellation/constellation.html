@@ -16,17 +16,41 @@
   canvas { display:block; }
   .hud {
     position:fixed; inset:auto 16px 16px 16px;
-    display:flex; flex-wrap: wrap; justify-content: center;
-    gap:12px; align-items:center; padding:10px 12px;
+    display:flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 20px;
     border:1px solid rgba(139,154,209,.25); border-radius:10px; background:var(--panel); backdrop-filter:blur(6px);
     z-index: 10;
+  }
+  .hud-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 20px;
+  }
+  .hud-separator {
+    border-top: 1px solid rgba(139, 154, 209, 0.15);
+    padding-top: 8px;
+  }
+  .control-cluster {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .playback-controls {
+    flex-grow: 1;
+    justify-content: center;
+  }
+  .playback-controls .range {
+    width: 100%;
+    max-width: 350px;
   }
   .btn { font-size:12px; padding:6px 10px; color:#cfd6ff; background:#161a2a; border:1px solid #2a3357; border-radius:8px; cursor:pointer; transition: background-color .2s; }
   .btn:hover:not(:disabled) { background-color: #3c4477; }
   .btn:disabled { opacity:.5; cursor:default; }
   .range { width:180px; }
-  .legend { display:flex; gap:12px; margin-left:auto; font-size:12px; opacity:.9; align-items:center; flex-wrap: wrap; justify-content: center; }
-  .swatch { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:middle; }
   .tooltip {
     position:fixed; padding:8px 10px; max-width:320px; font-size:12px; line-height:1.35;
     border:1px solid rgba(139,154,209,.35); border-radius:8px; background:rgba(15,18,30,.92);
@@ -39,8 +63,8 @@
     border-radius:20px; background:rgba(15,18,30,.75); backdrop-filter:blur(4px); opacity:0; transition:opacity .25s, transform .25s;
     z-index: 10;
   }
-  .toggles { display:flex; gap:8px; align-items:center; margin-left:16px; padding-left:16px; border-left: 1px solid rgba(139,154,209,.25);}
-  .toggles .toggle-label { opacity:.7; font-size:12px; }
+  .toggles { display:flex; gap:8px; align-items:center;}
+  .toggle-label { opacity:.7; font-size:12px; }
   .toggles label { font-size:12px; padding:4px 8px; background:rgba(22,26,42,.5); border:1px solid #2a3357; border-radius:6px; cursor:pointer; transition: all .2s; }
   .toggles input { display:none; }
   .toggles input:checked + label { background-color:#3c4477; border-color:#5a66a1; color:white; }
@@ -64,11 +88,13 @@
     border: none; background: rgba(255,255,255,0.1); color: white;
     border-radius: 50%; cursor: pointer; line-height: 20px; text-align: center;
   }
-  .control-group { display: flex; align-items: center; gap: 8px; font-size: 12px; }
   .control-group .range { width: 120px; }
   
-  /* --- Elegant File Input Styles --- */
-  .file-loader { display: flex; align-items: center; gap: 10px; }
+  .file-loader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
   .file-info { display: flex; align-items: center; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 6px; font-size: 12px; gap: 8px;}
   #fileName { color: var(--ink); opacity: 0.8; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
   #removeFile {
@@ -78,47 +104,63 @@
     transition: background-color 0.2s;
   }
   #removeFile:hover { background: var(--coral); }
-
 </style>
 </head>
 <body>
 
 <div class="hud">
-  <div id="file-loader" class="file-loader">
-      <label for="ledgerFile" id="ledgerFileLabel" class="btn">Carregar Arquivo</label>
-      <input type="file" id="ledgerFile" accept=".jsonl" style="display: none;" />
-      <div id="file-info" class="file-info" style="display: none;">
-          <span id="fileName"></span>
-          <button id="removeFile" title="Remover arquivo">&times;</button>
+  <div class="hud-row">
+    <div class="control-cluster">
+      <div id="file-loader" class="file-loader">
+          <label for="ledgerFile" id="ledgerFileLabel" class="btn">Carregar Arquivo</label>
+          <input type="file" id="ledgerFile" accept=".jsonl" style="display: none;" />
+          <div id="file-info" class="file-info" style="display: none;">
+              <span id="fileName"></span>
+              <button id="removeFile" title="Remover arquivo">&times;</button>
+          </div>
       </div>
+      <div id="presetSelectorGroup" class="control-cluster">
+        <span class="toggle-label">Demonstração:</span>
+        <select id="presetSelect" class="btn">
+          <option value="">Escolher...</option>
+          <option value="linear">Linha (Sequencial)</option>
+          <option value="recursive">Espiral (Reflexiva)</option>
+          <option value="divergent">Fragmento (Improvisada)</option>
+        </select>
+      </div>
+    </div>
+    <div class="control-cluster playback-controls">
+      <button id="play" class="btn" disabled>Reproduzir</button>
+      <button id="pause" class="btn" disabled>Pausar</button>
+      <input id="scrub" class="range" type="range" min="0" max="35" step="1" value="0" disabled/>
+      <span id="tick" style="font-size:12px; opacity:.8; min-width: 80px;">Turno 1 / 36</span>
+      <button id="resetView" class="btn" title="Redefinir Vista da Câmera">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10c0-4.42-2.87-8.15-6.84-9.48"/><path d="M12 2v4"/><path d="m16.24 7.76.22-.22"/><path d="M22 12h-4"/><path d="m16.46 16.24.22.22"/><path d="M12 22v-4"/><path d="m7.76 16.24-.22.22"/><path d="M2 12h4"/><path d="m7.54 7.76-.22-.22"/></svg>
+      </button>
+    </div>
   </div>
-  <button id="play" class="btn" disabled>Reproduzir</button>
-  <button id="pause" class="btn" disabled>Pausar</button>
-  <button id="resetView" class="btn" title="Redefinir Vista da Câmera">
-    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10c0-4.42-2.87-8.15-6.84-9.48"/><path d="M12 2v4"/><path d="m16.24 7.76.22-.22"/><path d="M22 12h-4"/><path d="m16.46 16.24.22.22"/><path d="M12 22v-4"/><path d="m7.76 16.24-.22.22"/><path d="M2 12h4"/><path d="m7.54 7.76-.22-.22"/></svg>
-  </button>
-  <input id="scrub" class="range" type="range" min="0" max="35" step="1" value="0" disabled/>
-  <span id="tick" style="font-size:12px; opacity:.8">Turno 1 / 36</span>
-  <div class="control-group" style="margin-left:16px; border-left: 1px solid rgba(139,154,209,.25); padding-left: 16px;">
-    <span>Coerência:</span>
-    <input id="coherenceSlider" class="range" type="range" min="0" max="1" step="0.01" value="0" />
-    <span id="coherenceValue">0%</span>
-  </div>
-  <div class="legend">
-    <div class="toggles">
-      <span class="toggle-label">Isolar:</span>
-      <input type="checkbox" id="toggleDrift" checked><label for="toggleDrift" style="color:var(--lav)">Deriva</label>
-      <input type="checkbox" id="toggleReturns" checked><label for="toggleReturns" style="color:var(--mint)">Retornos</label>
+  <div class="hud-row hud-separator">
+    <div class="control-cluster">
+      <span class="toggle-label">Coerência:</span>
+      <input id="coherenceSlider" class="range control-group" type="range" min="0" max="1" step="0.01" value="0" />
+      <span id="coherenceValue" style="min-width: 30px;">0%</span>
+    </div>
+    <div class="control-cluster">
+      <div class="toggles">
+        <span class="toggle-label">Isolar:</span>
+        <input type="checkbox" id="toggleDrift" checked><label for="toggleDrift" style="color:var(--lav)">Deriva</label>
+        <input type="checkbox" id="toggleReturns" checked><label for="toggleReturns" style="color:var(--mint)">Retornos</label>
+      </div>
+      <div id="model-selector-group" class="control-cluster" style="margin-left: 16px; padding-left: 16px; border-left: 1px solid rgba(139, 154, 209, 0.25);">
+        <span class="toggle-label">Modelo:</span>
+        <select id="modelSelect" class="btn">
+          <option value="small">Rápido</option>
+          <option value="large">Detalhado</option>
+        </select>
+      </div>
     </div>
   </div>
 </div>
-
-<!-- 🔁 Embedding Model Selector -->
-<select id="modelSelect" class="btn" style="margin-left:8px;">
-  <option value="small">Rápido</option>
-  <option value="large">Detalhado</option>
-</select>
-
 
 <div id="inspector" class="inspector">
     <button id="closeInspector">&times;</button>
@@ -156,7 +198,7 @@ let TURNS = [
   [ 3,'user',"Então cada turno é como um ponto em um mapa?",1,.88,.90,0,false],
   [ 4,'ai'  ,"Exatamente — pontos conectados formam cristas de coerência.",1,.92,.92,3,false],
   [ 5,'user',"E quando eu volto, isso é uma espiral?",1,.88,.90,2,false],
-  [ 6,'ai'  ,"Sim, uma espiral recursiva — retornar aprofunda a ressonância.",1,.93,.94,5,false],
+  [ 6,'ai'  ,"Sim, uma espiral recursiva — retornar aprofunda a resonância.",1,.93,.94,5,false],
   [ 7,'user',"E quando eu avanço, sem voltar?",1,.86,.88,0,false],
   [ 8,'ai'  ,"Isso é deriva linear — a conversa se movendo sem retorno.",1,.90,.90,7,false],
   [ 9,'user',"Então deriva, espiral, fratura são todas parte da geometria?",1,.86,.88,0,false],
@@ -371,6 +413,43 @@ removeFile.addEventListener('click', () => {
     ledgerFile.value = ''; // Reset file input
     fileInfo.style.display = 'none';
     ledgerFileLabel.style.display = 'block';
+});
+
+// --- PRESET DIALOGUE SELECTION ---
+document.getElementById('presetSelect').addEventListener('change', async (e) => {
+  const val = e.target.value;
+  if (!val) return;
+
+  try {
+    // Assuming the files are in a /static/dialogues/ folder relative to the server root.
+    // This path might need to be adjusted based on your final deployment structure.
+    const res = await fetch(`/static/dialogues/${val}.jsonl`);
+    if (!res.ok) throw new Error(`Could not fetch ${val}.jsonl`);
+    
+    const text = await res.text();
+    const ledger = text.trim().split('\n').map(line => JSON.parse(line));
+
+    let turns = ledgerToTurns(ledger);
+    const modelChoice = document.getElementById('modelSelect')?.value || 'small';
+    turns = await computeSemanticMetrics(turns, modelChoice);
+
+    // Hide any file info currently displayed
+    fileInfo.style.display = 'none';
+    ledgerFileLabel.style.display = 'block';
+    ledgerFile.value = ''; // Clear file input
+    document.getElementById('presetSelect').value = val; // Keep dropdown on selection
+
+
+    initConstellation(turns, true);
+  } catch (err) {
+    console.error('Erro ao carregar demonstração:', err);
+    // Let's create a more user-friendly alert in the UI
+    const banner = document.getElementById('phase');
+    banner.textContent = 'Falha ao carregar diálogo de demonstração.';
+    banner.style.opacity = '1';
+    banner.style.background = 'var(--coral)';
+    setTimeout(() => { banner.style.opacity = '0'; }, 3000);
+  }
 });
 
 
@@ -639,7 +718,7 @@ function animate(timestamp){
         playBtn.disabled = true;
         pauseBtn.disabled = false;
         scrub.disabled = false;
-        lastStepTime = timestamp;
+        lastStepTime = performance.now();
     }
   } else {
     if(playing && timestamp - lastStepTime > PLAYBACK_SPEED_MS) {
