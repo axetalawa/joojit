@@ -26,6 +26,7 @@
     .glassmorphism {
       background: rgba(10, 0, 21, 0.5); /* Semi-transparent dark purple */
       backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       border: 1px solid rgba(234, 234, 234, 0.1);
       border-radius: 1rem;
     }
@@ -95,9 +96,21 @@
     input:checked + .slider:before {
         transform: translateX(26px);
     }
+    /* README Modal Styles */
+    #readme-modal-content pre {
+        background-color: rgba(0,0,0,0.5);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        font-family: 'Courier New', Courier, monospace;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+     #readme-modal-content code {
+        font-family: 'Courier New', Courier, monospace;
+     }
   </style>
 </head>
-<body class="bg-black text-white">
+<body class="bg-black text-white font-sans">
 
   <canvas id="bg-canvas"></canvas>
 
@@ -168,12 +181,239 @@
 
   <!-- Footer Section -->
   <footer class="py-10 bg-[#050505] text-center text-gray-500 text-sm">
-    <p data-lang="footer-text">
-      <!-- Content will be populated by script -->
+    <p>
+      <span data-lang="footer-text"></span> · 
+      <button id="readme-open-btn" class="underline hover:text-white transition-colors duration-300" data-lang="readme-btn"></button>
     </p>
   </footer>
 
+  <!-- README Modal -->
+  <div id="readme-modal" class="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center p-4 hidden">
+    <div class="glassmorphism w-full max-w-3xl max-h-[90vh] flex flex-col">
+        <div class="flex-shrink-0 p-4 flex justify-between items-center border-b border-gray-700">
+            <h2 class="text-xl font-bold" data-lang="readme-title"></h2>
+            <button id="readme-close-btn" class="text-2xl text-gray-400 hover:text-white">&times;</button>
+        </div>
+        <div id="readme-modal-content" class="flex-grow p-6 overflow-y-auto space-y-6 text-gray-300">
+            <!-- Content is injected by JavaScript -->
+        </div>
+    </div>
+  </div>
+
+
   <script>
+    // --- ICON SVGs ---
+    const icons = {
+        brain: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block h-6 w-6 mr-2"><path d="M9.5 2c-1.31 0-2.5.3-3.56.88-1.07.57-2.02 1.37-2.8 2.34-.78.97-1.4 2.12-1.8 3.35-.4 1.23-.6 2.55-.6 3.93 0 1.38.2 2.7.6 3.93.4 1.23 1.02 2.38 1.8 3.35.78.97 1.73 1.77 2.8 2.34 1.06.58 2.25.88 3.56.88s2.5-.3 3.56-.88c1.07-.57 2.02-1.37 2.8-2.34.78-.97 1.4-2.12 1.8-3.35.4-1.23.6-2.55.6-3.93 0-1.38-.2-2.7-.6-3.93-.4-1.23-1.02-2.38-1.8-3.35-.78-.97-1.73-1.77-2.8-2.34C12 2.3 10.81 2 9.5 2z"></path><path d="M15 8c0-1.66-1.34-3-3-3s-3 1.34-3 3 1.34 3 3 3c.95 0 1.78-.44 2.32-1.13"></path><path d="M9.5 14c-1.38 0-2.5-1.12-2.5-2.5S8.12 9 9.5 9s2.5 1.12 2.5 2.5c0 .83-.41 1.55-1.03 2.01"></path></svg>`,
+        layout: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block h-6 w-6 mr-2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>`,
+        cpu: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block h-6 w-6 mr-2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>`,
+        database: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block h-6 w-6 mr-2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>`,
+        search: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block h-6 w-6 mr-2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`,
+        heart: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block h-6 w-6 mr-2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`,
+        globe: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block h-6 w-6 mr-2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`,
+        hardDrive: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block h-6 w-6 mr-2"><line x1="22" y1="12" x2="2" y2="12"></line><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path><line x1="6" y1="16" x2="6.01" y2="16"></line><line x1="10" y1="16" x2="10.01" y2="16"></line></svg>`,
+        settings: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block h-6 w-6 mr-2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`,
+        alertTriangle: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block h-6 w-6 mr-2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`,
+        arrowRightCircle: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block h-6 w-6 mr-2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg>`,
+        flask: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block h-6 w-6 mr-2"><path d="M9 3h6v5.333a2 2 0 0 1-.6 1.414L10 14.167V18a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2v-3.833l-4.4-4.414A2 2 0 0 1 9 8.333V3z"></path><path d="M6 14h12"></path></svg>`
+    };
+    
+    // --- README CONTENT ---
+    const readmeHTML = {
+      en: `
+        <h3 class="text-xl font-bold flex items-center">${icons.brain} How Joojit Works</h3>
+        <p class="text-lg italic text-gray-400">Dialog as Data. Geometry as Insight.</p>
+        
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.layout} Overview</h4>
+        <p>Joojit is a modular interpretive engine designed to represent dialogue as multidimensional data — semantic, affective, and geometric.</p>
+        <p>It operates as a small full-stack system:</p>
+        <ul class="list-disc list-inside space-y-1 pl-4">
+            <li><strong>Frontend:</strong> HTML + TailwindCSS + Three.js</li>
+            <li><strong>Backend:</strong> Flask (Python)</li>
+            <li><strong>Data Layer:</strong> JSONL-based “ledger” structure for conversational turns</li>
+            <li><strong>Analysis Layer:</strong> semantic embeddings, PCA dimensionality reduction, and affective lexicon mapping</li>
+        </ul>
+        <p>At its core, Joojit doesn’t generate language — it measures and renders the cognitive geometry of an exchange.</p>
+
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.cpu} Architecture Diagram</h4>
+        <pre><code>┌─────────────────────────────────────────────┐
+│                Frontend (JS)                │
+│─────────────────────────────────────────────│
+│ joojit.html → conversation + ledger logic   │
+│ constellation.html → visualization (3D)     │
+│ index.html → landing / conceptual frame     │
+└─────────────────────────────────────────────┘
+                 │  fetch("/analyze")
+                 ▼
+┌─────────────────────────────────────────────┐
+│              Flask Backend (API)            │
+│─────────────────────────────────────────────│
+│ /analyze  →  compute_semantic_metrics()     │
+│ /export   →  serialize conversation ledger  │
+│ /         →  serve templates (Jinja2)       │
+└─────────────────────────────────────────────┘
+                 │  embeddings, lexicon
+                 ▼
+┌─────────────────────────────────────────────┐
+│        Cognitive Analysis Pipeline          │
+│─────────────────────────────────────────────│
+│ OpenAI Embeddings (text-embedding-3-small)  │
+│ PCA (scikit-learn) → latent reduction       │
+│ NRC Emotion Lexicon → affect mapping        │
+│ Output: [coherence, drift, entropy, affect] │
+└─────────────────────────────────────────────┘</code></pre>
+
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.database} The Data Model</h4>
+        <p>Each conversational turn is represented as a structured tuple:</p>
+        <pre><code>[id, speaker, text, phase, coherence, alignment, reference, fragmented, drift, entropy, cluster, resonance, volatility, novelty, pca, affect]</code></pre>
+        <p>Minimal viable input (from the chat interface):</p>
+        <pre><code>{
+  "id": 4,
+  "speaker": "user",
+  "text": "I keep dreaming of recursion.",
+  "phase": 1,
+  "coherence": 0.9,
+  "alignment": 0.8,
+  "reference": 2,
+  "fragmented": false
+}</code></pre>
+        <p>The backend enriches this with additional metrics derived from the analysis pipeline.</p>
+        
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.search} Semantic Pipeline</h4>
+        <p><strong>1. Text Embedding:</strong> Each text field is passed through <code>text-embedding-3-small</code>, yielding a 1,536-dimensional vector. Embeddings are normalized and stacked to produce a conversation matrix.</p>
+        <p><strong>2. Dimensionality Reduction:</strong> Principal Component Analysis (<code>PCA(n_components=3)</code>) compresses the embedding matrix to a 3D latent space for visualization. This latent geometry becomes the scaffold for Constellation’s spatial layout — each turn occupies a coordinate in semantic space.</p>
+        <p><strong>3. Structural Metrics:</strong> Coherence (cosine similarity), Drift (delta in PCA space), Entropy (lexical diversity), and Cluster (optional KMeans grouping).</p>
+
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.heart} Affective Pipeline</h4>
+        <p>For each text, language is detected, tokenized, and compared against the NRC Emotion Lexicon. For every emotion (anger, joy, fear, etc.), the system counts matched tokens and normalizes them to produce an eight-dimensional affect vector.</p>
+        <p>Example output:</p>
+        <pre><code>"affect": {
+  "joy": 0.42,
+  "sadness": 0.18,
+  "trust": 0.27,
+  "anticipation": 0.13
+}</code></pre>
+        <p>These values are passed to the frontend for color mapping and glow intensity.</p>
+        
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.globe} Visualization Layer</h4>
+        <p>Built in Three.js, the <code>constellation.html</code> view renders each turn as a particle in semantic space. Metrics are mapped to visual properties like distance, color, and size.</p>
+
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.hardDrive} Ledger System</h4>
+        <p>Every conversation is recorded as a JSONL ledger, which can be downloaded or re-uploaded for later visualization.</p>
+        
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.brain} Interpretive Philosophy</h4>
+        <p>Joojit treats dialogue as field data, not text. Instead of extracting meaning, it measures relational structure — how utterances cohere, diverge, return, and refract. The goal is not prediction, but perceptibility.</p>
+        
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.settings} Stack Summary</h4>
+        <div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead><tr class="border-b border-gray-600"><th class="p-2">Layer</th><th class="p-2">Technology</th><th class="p-2">Purpose</th></tr></thead><tbody><tr class="border-b border-gray-700"><td class="p-2">Frontend</td><td class="p-2">HTML, TailwindCSS, Three.js</td><td class="p-2">Chat interface + visualization</td></tr><tr class="border-b border-gray-700"><td class="p-2">Backend</td><td class="p-2">Flask, Flask-CORS</td><td class="p-2">API + rendering</td></tr><tr class="border-b border-gray-700"><td class="p-2">Analysis</td><td class="p-2">NumPy, scikit-learn, langdetect</td><td class="p-2">Semantic + structural metrics</td></tr><tr class="border-b border-gray-700"><td class="p-2">Embeddings</td><td class="p-2">OpenAI API (text-embedding-3-small)</td><td class="p-2">Latent space vectors</td></tr><tr class="border-b border-gray-700"><td class="p-2">Emotion</td><td class="p-2">NRC Emotion Lexicon</td><td class="p-2">Affective mapping</td></tr><tr><td class="p-2">Storage</td><td class="p-2">JSONL Ledger (local)</td><td class="p-2">Persistent conversational state</td></tr></tbody></table></div>
+        
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.alertTriangle} Current Constraints</h4>
+        <ul class="list-disc list-inside pl-4"><li>Emotion analysis limited to English.</li><li>PCA fails on ≤2 messages.</li><li>Performance degrades beyond ~300 turns.</li><li>All computation is synchronous.</li></ul>
+
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.arrowRightCircle} Next Technical Directions</h4>
+        <ul class="list-disc list-inside pl-4"><li>Migrate to multilingual embeddings for affect mapping.</li><li>Move analytics to background workers (Celery + Redis).</li><li>Refactor visualization to GPU shader pipeline.</li><li>Expose public API endpoints for external research.</li></ul>
+        
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.flask} TL;DR for Engineers</h4>
+        <p>Joojit = interpretability as visualization. It parses dialogue → embeds text → projects latent vectors → annotates with emotion → visualizes as 3D topology. All components are modular, small enough to run locally, but expressive enough to prototype the future of dialogic analytics.</p>
+      `,
+      pt: `
+        <h3 class="text-xl font-bold flex items-center">${icons.brain} Como o Joojit Funciona</h3>
+        <p class="text-lg italic text-gray-400">Diálogo como Dados. Geometria como Percepção.</p>
+        
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.layout} Visão Geral</h4>
+        <p>O Joojit é um motor interpretativo modular projetado para representar o diálogo como dados multidimensionais — semânticos, afetivos e geométricos.</p>
+        <p>Ele opera como um pequeno sistema full-stack:</p>
+        <ul class="list-disc list-inside space-y-1 pl-4">
+            <li><strong>Frontend:</strong> HTML + TailwindCSS + Three.js</li>
+            <li><strong>Backend:</strong> Flask (Python)</li>
+            <li><strong>Camada de Dados:</strong> Estrutura de "livro-razão" baseada em JSONL para turnos de conversação</li>
+            <li><strong>Camada de Análise:</strong> embeddings semânticos, redução de dimensionalidade com PCA e mapeamento de léxico afetivo</li>
+        </ul>
+        <p>Em sua essência, o Joojit não gera linguagem — ele mede e renderiza a geometria cognitiva de uma troca.</p>
+
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.cpu} Diagrama de Arquitetura</h4>
+        <pre><code>┌─────────────────────────────────────────────┐
+│                Frontend (JS)                │
+│─────────────────────────────────────────────│
+│ joojit.html → lógica de conversação + ledger│
+│ constellation.html → visualização (3D)      │
+│ index.html → landing / quadro conceitual    │
+└─────────────────────────────────────────────┘
+                 │  fetch("/analyze")
+                 ▼
+┌─────────────────────────────────────────────┐
+│              Backend Flask (API)            │
+│─────────────────────────────────────────────│
+│ /analyze  →  compute_semantic_metrics()     │
+│ /export   →  serializar ledger da conversa  │
+│ /         →  servir templates (Jinja2)      │
+└─────────────────────────────────────────────┘
+                 │  embeddings, léxico
+                 ▼
+┌─────────────────────────────────────────────┐
+│        Pipeline de Análise Cognitiva        │
+│─────────────────────────────────────────────│
+│ OpenAI Embeddings (text-embedding-3-small)  │
+│ PCA (scikit-learn) → redução latente        │
+│ NRC Emotion Lexicon → mapeamento de afeto   │
+│ Saída: [coerência, desvio, entropia, afeto] │
+└─────────────────────────────────────────────┘</code></pre>
+
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.database} O Modelo de Dados</h4>
+        <p>Cada turno da conversa é representado como uma tupla estruturada:</p>
+        <pre><code>[id, falante, texto, fase, coerência, alinhamento, referência, fragmentado, desvio, entropia, cluster, ressonância, volatilidade, novidade, pca, afeto]</code></pre>
+        <p>Entrada mínima viável (da interface de chat):</p>
+        <pre><code>{
+  "id": 4,
+  "speaker": "usuário",
+  "text": "Eu continuo sonhando com recursão.",
+  "phase": 1,
+  "coherence": 0.9,
+  "alignment": 0.8,
+  "reference": 2,
+  "fragmented": false
+}</code></pre>
+        <p>O backend enriquece isso com métricas adicionais derivadas do pipeline de análise.</p>
+        
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.search} Pipeline Semântico</h4>
+        <p><strong>1. Embedding de Texto:</strong> Cada campo de texto é passado pelo <code>text-embedding-3-small</code>, gerando um vetor de 1.536 dimensões. Os embeddings são normalizados e empilhados para produzir uma matriz da conversa.</p>
+        <p><strong>2. Redução de Dimensionalidade:</strong> A Análise de Componentes Principais (<code>PCA(n_components=3)</code>) comprime a matriz de embedding para um espaço latente 3D para visualização. Essa geometria latente se torna o andaime para o layout espacial da Constelação — cada turno ocupa uma coordenada no espaço semântico.</p>
+        <p><strong>3. Métricas Estruturais:</strong> Coerência (similaridade de cosseno), Desvio (delta no espaço PCA), Entropia (diversidade lexical) e Cluster (agrupamento KMeans opcional).</p>
+
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.heart} Pipeline Afetivo</h4>
+        <p>Para cada texto, o idioma é detectado, tokenizado e comparado com o NRC Emotion Lexicon. Para cada emoção (raiva, alegria, medo, etc.), o sistema conta os tokens correspondentes e os normaliza para produzir um vetor de afeto de oito dimensões.</p>
+        <p>Exemplo de saída:</p>
+        <pre><code>"affect": {
+  "joy": 0.42,
+  "sadness": 0.18,
+  "trust": 0.27,
+  "anticipation": 0.13
+}</code></pre>
+        <p>Esses valores são passados para o frontend para mapeamento de cores e intensidade de brilho.</p>
+        
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.globe} Camada de Visualização</h4>
+        <p>Construída em Three.js, a visualização <code>constellation.html</code> renderiza cada turno como uma partícula no espaço semântico. As métricas são mapeadas para propriedades visuais como distância, cor e tamanho.</p>
+
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.hardDrive} Sistema de Ledger</h4>
+        <p>Toda conversa é registrada como um ledger JSONL, que pode ser baixado ou recarregado para visualização posterior.</p>
+        
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.brain} Filosofia Interpretativa</h4>
+        <p>O Joojit trata o diálogo como dados de campo, não como texto. Em vez de extrair significado, ele mede a estrutura relacional — como as declarações se unem, divergem, retornam e se refratam. O objetivo não é a previsão, mas a perceptibilidade.</p>
+        
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.settings} Resumo da Stack</h4>
+        <div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead><tr class="border-b border-gray-600"><th class="p-2">Camada</th><th class="p-2">Tecnologia</th><th class="p-2">Propósito</th></tr></thead><tbody><tr class="border-b border-gray-700"><td class="p-2">Frontend</td><td class="p-2">HTML, TailwindCSS, Three.js</td><td class="p-2">Interface de chat + visualização</td></tr><tr class="border-b border-gray-700"><td class="p-2">Backend</td><td class="p-2">Flask, Flask-CORS</td><td class="p-2">API + renderização</td></tr><tr class="border-b border-gray-700"><td class="p-2">Análise</td><td class="p-2">NumPy, scikit-learn, langdetect</td><td class="p-2">Métricas semânticas + estruturais</td></tr><tr class="border-b border-gray-700"><td class="p-2">Embeddings</td><td class="p-2">API OpenAI (text-embedding-3-small)</td><td class="p-2">Vetores de espaço latente</td></tr><tr class="border-b border-gray-700"><td class="p-2">Emoção</td><td class="p-2">NRC Emotion Lexicon</td><td class="p-2">Mapeamento afetivo</td></tr><tr><td class="p-2">Armazenamento</td><td class="p-2">Ledger JSONL (local)</td><td class="p-2">Estado persistente da conversa</td></tr></tbody></table></div>
+        
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.alertTriangle} Limitações Atuais</h4>
+        <ul class="list-disc list-inside pl-4"><li>Análise de emoções limitada ao inglês.</li><li>PCA falha com ≤2 mensagens.</li><li>O desempenho degrada com mais de ~300 turnos.</li><li>Toda a computação é síncrona.</li></ul>
+
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.arrowRightCircle} Próximas Direções Técnicas</h4>
+        <ul class="list-disc list-inside pl-4"><li>Migrar para embeddings multilingues para mapeamento de afeto.</li><li>Mover análises para workers em segundo plano (Celery + Redis).</li><li>Refatorar visualização para pipeline de shaders na GPU.</li><li>Expor endpoints de API públicos para pesquisa externa.</li></ul>
+        
+        <h4 class="text-lg font-bold flex items-center mt-4">${icons.flask} TL;DR para Engenheiros</h4>
+        <p>Joojit = interpretabilidade como visualização. Ele processa diálogos → embeda texto → projeta vetores latentes → anota com emoção → visualiza como topologia 3D. Todos os componentes são modulares, pequenos o suficiente para rodar localmente, mas expressivos o suficiente para prototipar o futuro da análise dialógica.</p>
+      `,
+    };
+
     // --- LANGUAGE CONTENT ---
     const langContent = {
         pt: {
@@ -185,7 +425,10 @@
             "demo-title": "Explore o Protótipo",
             "demo-desc": "O protótipo integra análise lexical de emoções, métricas de coerência semântica e renderização visual 3D. É um experimento full-stack em interpretabilidade — construído com Flask, OpenAI e Three.js.",
             "demo-btn": "Experimente o Joojit →",
-            "footer-text": "© 2025 Mute Logic Lab · Um Protótipo de Geometria Cognitiva"
+            "footer-text": "© 2025 Mute Logic Lab · Um Protótipo de Geometria Cognitiva",
+            "readme-btn": "README",
+            "readme-title": "README",
+            "readme-content": readmeHTML.pt,
         },
         en: {
             "title": "Joojit - Cognitive Geometry",
@@ -196,7 +439,10 @@
             "demo-title": "Explore the Prototype",
             "demo-desc": "The prototype integrates lexical emotion analysis, semantic coherence metrics, and 3D visual rendering. It’s a full-stack experiment in interpretability — built with Flask, OpenAI, and Three.js.",
             "demo-btn": "Try Joojit →",
-            "footer-text": "© 2025 Mute Logic Lab · A Cognitive Geometry Prototype"
+            "footer-text": "© 2025 Mute Logic Lab · A Cognitive Geometry Prototype",
+            "readme-btn": "README",
+            "readme-title": "README",
+            "readme-content": readmeHTML.en
         }
     };
     
@@ -215,6 +461,8 @@
                 el.innerHTML = langContent[lang][key];
             }
         });
+        // Specifically update README content
+        document.getElementById('readme-modal-content').innerHTML = langContent[lang]['readme-content'];
         langToggle.checked = (lang === 'en');
     }
 
@@ -307,6 +555,33 @@
         console.log("User entering interface at", new Date().toISOString());
         window.location.href = `/joojit?lang=${currentLang}`;
     }
+
+    // --- README Modal Logic ---
+    const readmeModal = document.getElementById('readme-modal');
+    const openReadmeBtn = document.getElementById('readme-open-btn');
+    const closeReadmeBtn = document.getElementById('readme-close-btn');
+
+    openReadmeBtn.addEventListener('click', () => {
+        readmeModal.classList.remove('hidden');
+    });
+
+    closeReadmeBtn.addEventListener('click', () => {
+        readmeModal.classList.add('hidden');
+    });
+
+    // Close modal if clicking on the background overlay
+    readmeModal.addEventListener('click', (event) => {
+        if (event.target === readmeModal) {
+            readmeModal.classList.add('hidden');
+        }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !readmeModal.classList.contains('hidden')) {
+            readmeModal.classList.add('hidden');
+        }
+    });
   </script>
 
 </body>
