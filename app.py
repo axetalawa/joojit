@@ -84,6 +84,33 @@ def joojit():
 def constellation():
     return render_template('constellation.html')
 
+@app.route('/ask', methods=['POST'])
+def ask():
+    try:
+        data = request.get_json()
+        prompt = data.get("prompt", "").strip()
+        if not prompt:
+            return jsonify({"error": "Empty prompt"}), 400
+
+        # Call OpenAI or any backend model
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are Joojit, an experimental dialogic engine."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+
+        reply = response.choices[0].message.content.strip()
+        return jsonify({
+            "reply": reply,
+            "model": "gpt-4o-mini"
+        })
+
+    except Exception as e:
+        print("Error in /ask:", e)
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/analyze", methods=["POST"])
 def analyze():
     try:
@@ -96,6 +123,7 @@ def analyze():
     except Exception as e:
         print("❌ Error:", e)
         return jsonify({"error": str(e)}), 500
+    
 
 @app.route("/export", methods=["POST"])
 def export_conversation():
