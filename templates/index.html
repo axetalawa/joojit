@@ -55,7 +55,7 @@
       padding: 1rem; /* Add padding to keep content off edges */
       display: flex; /* Ensure inner elements can be sized correctly */
       flex-direction: column;
-      max-width: 700px; /* Limit width to match compose bar */
+      max-width: 490px; /* Limit width to match compose bar - DECREASED by ~30% */
       margin: 0 auto; /* Center the content */
     }
     
@@ -100,9 +100,9 @@
       border-radius: 12px;
       transition: height 0.3s ease-in-out;
       width: 100%;
-      min-height: 96px;
-      height: 96px;
-      max-height: 250px;
+      min-height: 96px; /* DECREASED by ~30% */
+      height: 96px; /* DECREASED by ~30% */
+      max-height: 250px; /* DECREASED by ~30% */
       resize: none;
       overflow-y: auto;
       background-color: var(--input-background);
@@ -122,7 +122,7 @@
     }
     .button-wing {
         display: flex;
-        flex-direction: column; /* Changed to column for 3-button stack */
+        flex-direction: row; /* Aligns icons in a single row */
         gap: 8px;
     }
 
@@ -268,7 +268,7 @@
   </main>
   
   <div id="fullscreen-viewer">
-    <div id="fullscreen-close-btn">×</div>
+    <div id="fullscreen-close-btn">ﾃ/div>
     <div id="fullscreen-content" class="output-area flex flex-col"></div>
   </div>
 
@@ -306,7 +306,7 @@
       ledgerStore.activeSession = id;
       localStorage.setItem("ledgerStore", JSON.stringify(ledgerStore));
       clearChatUI();
-      console.log("🌱 New session started:", id);
+      console.log("験 New session started:", id);
     }
 
     function getActiveLedger() {
@@ -351,7 +351,7 @@
         localStorage.removeItem("ledgerStore");
         ledgerStore = {}; // Reset the in-memory store
         newSession(); // Initialize a fresh session state and clear UI
-        console.log("🔥 All sessions cleared.");
+        console.log("櫨 All sessions cleared.");
       }
     }
 
@@ -456,7 +456,7 @@
     // --- TOOLBAR AND INPUT LOGIC ---
     function clearInput() {
         chatInput.value = '';
-        chatInput.style.height = '96px';
+        chatInput.style.height = '96px'; /* DECREASED by ~30% */
     }
 
     chatInput.addEventListener('input', () => {
@@ -537,4 +537,6 @@
 
   </script></body>
 </html>
+
+
 
