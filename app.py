@@ -1,5 +1,5 @@
 # app.py — Final Integrated Version (Constellation + Chat Agent)
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -123,8 +123,8 @@ def ask():
 # ===============================================================
 @app.route("/", methods=["GET"])
 def index():
-    return jsonify({"status": "Constellation API is running"})
-
+    # Serve your main front-end page from /templates
+    return render_template("index.html")
 
 # ===============================================================
 # 🚀 Launch App
