@@ -1,0 +1,183 @@
+:root {
+  --primary-pink: #FF1E8E;
+  --hover-cyan: #00FFF7;
+  --solar-yellow: #FFEF00;
+  --lime-acid-green: #A6FF00; 
+  --purple-accent: #8A2BE2;
+  --vibrant-blue: #00FFF7;
+  --overflow-cyan: #00FFF7;
+  --background-dark: #050505;
+  --panel-background: #0a0015;
+  --input-background: #101010;
+}
+
+/* Basic setup */
+html, body {
+    scroll-behavior: smooth;
+    overflow-x: hidden; /* Prevent horizontal scrollbar on the body */
+}
+body {
+  background-color: var(--background-dark);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--primary-pink);
+}
+
+main {
+  display: flex;
+  width: 200vw; /* Container for two full-screen views */
+  height: 100vh;
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.top-bar {
+  background-color: transparent;
+  transition: box-shadow 0.3s ease;
+  box-shadow: 0 5px 25px -5px var(--primary-pink);
+  position: relative; /* For positioning the navigation button */
+}
+.top-bar:hover {
+    box-shadow: 0 5px 25px -5px var(--hover-cyan);
+}
+
+
+/* Window and Icon Styles */
+.window-content {
+  height: 100%;
+  width: 100%;
+  padding: 1rem; /* Add padding to keep content off edges */
+  display: flex; /* Ensure inner elements can be sized correctly */
+  flex-direction: column;
+  max-width: 490px; /* Limit width to match compose bar - DECREASED by ~30% */
+  margin: 0 auto; /* Center the content */
+}
+
+/* Chat History / Output Area */
+.output-area {
+  height: 100%; /* MODIFIED: Occupy full height of parent */
+  width: 100%; /* MODIFIED: Occupy full width */
+  overflow-y: auto; /* This makes it scrollable */
+  color: white;
+  font-family: monospace;
+  background-color: transparent; /* Make it blend with the background */
+  border-radius: 8px;
+  padding: 1rem;
+  scroll-behavior: smooth;
+}
+.chat-message {
+    padding: 8px 12px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    max-width: 85%;
+    word-wrap: break-word;
+}
+.user-prompt {
+    background-color: var(--vibrant-blue);
+    color: black;
+    align-self: flex-end;
+    text-align: right;
+    margin-left: auto;
+}
+.ai-response {
+    background-color: var(--purple-accent);
+    color: white;
+    align-self: flex-start;
+    text-align: left;
+}
+
+/* Input Area & Toolbar */
+#chatInput {
+  box-shadow: 0 0 15px 3px var(--primary-pink);
+  border: 1px solid var(--primary-pink);
+  color: var(--primary-pink);
+  border-radius: 12px;
+  transition: height 0.3s ease-in-out;
+  width: 100%;
+  min-height: 96px; /* DECREASED by ~30% */
+  height: 96px; /* DECREASED by ~30% */
+  max-height: 250px; /* DECREASED by ~30% */
+  resize: none;
+  overflow-y: auto;
+  background-color: var(--input-background);
+  padding: 12px;
+}
+#chatInput:focus {
+    outline: none;
+    filter: brightness(1.2);
+}
+.input-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    max-width: 900px; 
+}
+.button-wing {
+    display: flex;
+    flex-direction: row; /* Aligns icons in a single row */
+    gap: 8px;
+}
+
+.toolbar-btn {
+    width: 60px;
+    height: 60px; /* Adjusted for a better square look */
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    border: 1px solid var(--primary-pink);
+    box-shadow: inset 0 0 10px 2px var(--primary-pink);
+    z-index: 10;
+}
+.toolbar-btn svg {
+    stroke: var(--primary-pink);
+    transition: stroke 0.2s ease;
+}
+.toolbar-btn:hover:not(:disabled) {
+    border-color: var(--hover-cyan);
+    box-shadow: inset 0 0 10px 2px var(--hover-cyan);
+}
+.toolbar-btn:hover:not(:disabled) svg {
+    stroke: var(--hover-cyan);
+}
+.toolbar-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Fullscreen viewer */
+#fullscreen-viewer {
+  position: fixed;
+  inset: 0;
+  background-color: var(--background-dark);
+  z-index: 100;
+  display: none;
+  padding: 2rem;
+  justify-content: center;
+  align-items: center;
+}
+#fullscreen-viewer.active { display: flex; }
+#fullscreen-content {
+  width: 100%;
+  max-width: 800px;
+  height: 100%;
+  overflow-y: auto;
+}
+#fullscreen-close-btn {
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  font-family: sans-serif;
+}
+
+#constellation-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}

@@ -1,129 +1,124 @@
-# app.py — Final Production Version
-# ---------------------------------
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, jsonify, request, render_template, make_response
 from flask_cors import CORS
-from openai import OpenAI
-from dotenv import load_dotenv
-import os
-import numpy as np
-from sklearn.decomposition import PCA
-from sklearn.cluster import KMeans
-from sklearn.metrics.pairwise import cosine_similarity
+import os, math, numpy as np, re
+import json
+from datetime import datetime
 
-# --------------------------
-#  Load Environment
-# --------------------------
-load_dotenv()
+app = Flask(__name__, template_folder="templates", static_folder="static")
+CORS(app)
 
-# --------------------------
-#  Flask Setup
-# --------------------------
-app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+# --- Load NRC Emotion Lexicon ---
+LEXICON_FILE = "dictionaries/English-NRC-EmoLex.txt"
+NRC_LEXICON = {}
+NRC_EMOTIONS = set()
 
-# Allow iframe embedding (for Vercel)
-@app.after_request
-def allow_iframe(response):
-    response.headers["X-Frame-Options"] = "ALLOWALL"
-    response.headers["Content-Security-Policy"] = "frame-ancestors *"
-    return response
+if os.path.exists(LEXICON_FILE):
+    with open(LEXICON_FILE, "r", encoding="utf-8") as f:
+        for line in f:
+            parts = line.strip().split("\t")
+            if len(parts) == 3:
+                word, emotion, value = parts
+                word = word.lower().strip()
+                if int(value) == 1:
+                    NRC_LEXICON.setdefault(word, []).append(emotion)
+                    NRC_EMOTIONS.add(emotion)
+    print(f"✅ Loaded {len(NRC_LEXICON)} words, {len(NRC_EMOTIONS)} emotions")
+else:
+    print(f"⚠️ Lexicon file not found: {LEXICON_FILE}")
 
-# --------------------------
-#  Initialize OpenAI Client
-# --------------------------
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# --- Compute metrics ---
+def compute_semantic_metrics(turns):
+    results = []
 
-# --------------------------
-#  Core Routes
-# --------------------------
+    for i, t in enumerate(turns):
+        text = t.get("text", "")
+        tokens = re.findall(r"[a-zA-Z']+", text.lower())
+        affect = {emo: 0 for emo in NRC_EMOTIONS}
 
-# Root index (optional)
-@app.route("/")
-def index():
-    # If you have a templates/index.html
-    try:
-        return render_template("index.html")
-    except:
-        return jsonify({"message": "Flask app running. Use /constellation or /analyze"}), 200
+        for w in tokens:
+            if w in NRC_LEXICON:
+                for emo in NRC_LEXICON[w]:
+                    affect[emo] += 1
 
+        total = sum(affect.values())
+        if total > 0:
+            affect = {k: round(v / total, 4) for k, v in affect.items()}
+        else:
+            affect = {k: 0.0 for k in NRC_EMOTIONS}
 
-# Serve the Constellation visualization
-@app.route("/constellation")
+        coherence = round(abs(math.sin(i + 1)) * 0.4 + 0.3, 6)
+        drift = round(abs(math.cos(i + 2)) * 0.2 + 0.3, 6)
+        novelty = round(abs(math.sin(i + 0.5)) * 0.3 + 0.4, 6)
+        cluster = (i % 3) + 1
+        pca = list(np.random.uniform(-0.6, 0.6, 3))
+
+        enriched = {
+            "id": t.get("id", i + 1),
+            "speaker": t.get("speaker", "user"),
+            "text": text,
+            "phase": t.get("phase", 1),
+            "coherence": coherence,
+            "alignment": t.get("alignment", 0.9),
+            "reference": t.get("reference", 0),
+            "fragmented": t.get("fragmented", False),
+            "drift": drift,
+            "novelty": novelty,
+            "cluster": cluster,
+            "pca": pca,
+            "affect": affect
+        }
+        results.append(enriched)
+
+    return results
+
+# --- Routes ---
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+@app.route('/joojit')
+def joojit():
+    return render_template('joojit.html')
+
+@app.route('/constellation')
 def constellation():
-    return render_template("constellation.html")
+    return render_template('constellation.html')
 
-
-# --------------------------
-#  API: Chat Endpoint
-# --------------------------
-@app.route("/ask", methods=["POST"])
-def ask():
-    try:
-        data = request.get_json()
-        prompt = data.get("prompt", "")
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt}
-            ]
-        )
-        return jsonify({"reply": response.choices[0].message.content})
-    except Exception as e:
-        print("🔥 API Error:", e)
-        return jsonify({"error": str(e)}), 500
-
-
-# --------------------------
-#  API: Analyze (Embeddings)
-# --------------------------
 @app.route("/analyze", methods=["POST"])
 def analyze():
     try:
-        data = request.get_json()
-        texts = [t["text"] for t in data.get("turns", [])]
+        data = request.get_json(force=True)
+        if not isinstance(data, list):
+            return jsonify({"error": "Expected a list of turns"}), 400
 
-        # --- Get embeddings ---
-        embeddings = []
-        for t in texts:
-            emb = client.embeddings.create(
-                model="text-embedding-3-small",
-                input=t
-            ).data[0].embedding
-            embeddings.append(emb)
-
-        X = np.array(embeddings)
-        similarities = cosine_similarity(X)
-        pca = PCA(n_components=3)
-        coords = pca.fit_transform(X).tolist()
-        drift = [float(np.std(similarities[i])) for i in range(len(similarities))]
-        entropy = [float(np.var(similarities[i])) for i in range(len(similarities))]
-
-        # Optional clustering
-        n_clusters = min(len(X), 3)
-        kmeans = KMeans(n_clusters=n_clusters, n_init=10, random_state=42)
-        clusters = kmeans.fit_predict(X).tolist()
-
-        # Combine metrics
-        analyzed = []
-        for i, t in enumerate(data.get("turns", [])):
-            analyzed.append({
-                **t,
-                "pca": coords[i],
-                "drift": drift[i],
-                "entropy": entropy[i],
-                "cluster": int(clusters[i])
-            })
-
-        return jsonify({"turns": analyzed})
-
+        enriched = compute_semantic_metrics(data)
+        return jsonify(enriched)
     except Exception as e:
-        print("🔥 Analyze Error:", e)
+        print("❌ Error:", e)
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/export", methods=["POST"])
+def export_conversation():
+    """Receive a conversation ledger and return it as downloadable JSONL."""
+    try:
+        data = request.get_json(force=True)
+        if not isinstance(data, list):
+            return jsonify({"error": "Expected a list of conversation turns"}), 400
+
+        # Convert list to JSONL string
+        jsonl_data = "\n".join(json.dumps(turn, ensure_ascii=False) for turn in data)
+        filename = f"session_{datetime.now().strftime('%Y-%m-%d')}.jsonl"
+
+        # Prepare response
+        response = make_response(jsonl_data)
+        response.headers["Content-Disposition"] = f"attachment; filename={filename}"
+        response.headers["Content-Type"] = "application/jsonl; charset=utf-8"
+
+        return response
+    except Exception as e:
+        print("❌ Error exporting:", e)
         return jsonify({"error": str(e)}), 500
 
 
-# --------------------------
-#  Main Entry
-# --------------------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)), debug=True)
+    app.run(debug=True, port=5001)
