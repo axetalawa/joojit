@@ -13,7 +13,7 @@ load_dotenv()
 
 # --- Flask setup ---
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, origins="*")  # or restrict to your Vercel domain for production
 
 # --- OpenAI client ---
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
