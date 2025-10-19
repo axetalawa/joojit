@@ -14,6 +14,7 @@
       --background-dark: #050505;
       --panel-background: #0a0015;
       --input-background: #101010;
+      --primary-pink: #FF1E8E;
     }
 
     /* Basic setup */
@@ -791,11 +792,9 @@
         }
     });
 
-
     const API_BASE = window.location.hostname.includes("localhost")
-    ? "http://127.0.0.1:5001"
-    : "https://web-production-385b3.up.railway.app";
-    : "https://joojit.com";
+      ? "http://127.0.0.1:5001"
+      : "https://joojit.com";
     
     // --- RESPONSE FORMATTING ---
     function formatAIResponse(text) {
