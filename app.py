@@ -14,6 +14,7 @@ load_dotenv()
 
 # --- Flask Setup ---
 app = Flask(__name__)
+app.config['TEMPLATES_AUTO_RELOAD'] = True
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # --- Initialize OpenAI Client ---
