@@ -791,15 +791,10 @@
         }
     });
 
-    const hostname = window.location.hostname;
-    const isLocal = hostname.includes("localhost");
-    const isProd = hostname.includes("joojit.com");
 
-    const API_BASE = isLocal
-      ? "http://127.0.0.1:5001"
-      : isProd
-        ? "https://joojit.com"
-        : "https://web-production-385b3.up.railway.app";
+    const API_BASE = window.location.hostname.includes("localhost")
+    ? "http://127.0.0.1:5001"
+    : "https://web-production-385b3.up.railway.app";
     
     // --- RESPONSE FORMATTING ---
     function formatAIResponse(text) {
