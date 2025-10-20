@@ -453,14 +453,43 @@ scene.add(constellationGroup);
 // --- SEMANTIC ANALYSIS FUNCTION ---
 async function computeSemanticMetrics(turns, model = "small") {
   try {
-    const turnsForAPI = turns.map(t => ({ id: t[0], speaker: t[1], text: t[2], phase: t[3], coherence: t[4], alignment: t[5], reference: t[6], fragmented: t[7] }));
-    const res = await fetch(`${API_BASE}/analyze`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(turnsForAPI) });
+    // 🧭 Prepare turns in API-friendly format
+    const turnsForAPI = turns.map(t => ({
+      id: t[0],
+      speaker: t[1],
+      text: t[2],
+      phase: t[3],
+      coherence: t[4],
+      alignment: t[5],
+      reference: t[6],
+      fragmented: t[7]
+    }));
+
+    // 🌐 Send to Flask /analyze endpoint
+    const res = await fetch(`${API_BASE}/analyze`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(turnsForAPI)
+    });
+
+    // 🧩 Parse and validate response
+    if (!res.ok) {
+      console.error("❌ API returned error:", res.status, res.statusText);
+      throw new Error(`API responded with ${res.status}`);
+    }
+
     const data = await res.json();
-    if (Array.isArray(data) && data.length > 0) return data;
-    return [];
+
+    if (Array.isArray(data) && data.length > 0) {
+      console.log("✅ Análise semântica concluída:", data);
+      return data;
+    } else {
+      console.warn("⚠️ Nenhum dado válido retornado da API:", data);
+      return [];
+    }
   } catch (err) {
     console.error("❌ Erro ao computar métricas:", err);
-    alert(langContent[currentLang]['analysis-error-alert']);
+    alert(langContent[currentLang]['analysis-error-alert'] || "Erro ao processar análise semântica.");
     return [];
   }
 }
@@ -502,6 +531,7 @@ ledgerFile.addEventListener('change', async e => {
     ledgerFileLabel.style.display = 'none';
     initConstellation(turns, true);
   } catch (err) {
+    console.error("Error during file processing:", err);
     alert(langContent[currentLang]['process-error-alert']);
   } finally {
     loadingOverlay.style.display = 'none';
@@ -555,28 +585,74 @@ function initConstellation(newTurnsData, resetAnimation = false) {
   const emotionColorMap = { joy: "#ffd166", sadness: "#118ab2", anger: "#ef476f", fear: "#073b4c", trust: "#06d6a0", disgust: "#8a2be2", surprise: "#f78c6b", anticipation: "#ffb703" };
   const starGeom = new THREE.BufferGeometry();
   const starPositions = [], starColors = [], starSizes = [], starAlphas = [];
+  
+  // Check if the data is in the new object format or the old array format.
+  const isObjectSchema = TURNS.length > 0 && typeof TURNS[0] === 'object' && !Array.isArray(TURNS[0]);
+
   TURNS.forEach((turnData, i) => {
-    const [id, speaker, text, phase, coh, ali, ref] = turnData;
-    const radiusBase = 70, radiusSpan = 72, angleStep = (Math.PI * 2) / (TURNS.length + 6);
-    const r = radiusBase + (1 - coh) * radiusSpan;
-    const a = i * angleStep;
-    const pos = new THREE.Vector3(Math.cos(a) * r, Math.sin(a) * r, (coh - 0.5) * 60);
-    starPositions.push(pos.x, pos.y, pos.z);
-    const emotion = turnData.affect || {};
-    const dominant = Object.entries(emotion).sort((a,b)=>b[1]-a[1])[0];
+    let pos, id, speaker, text, phase, coh, ali, ref, drift, entropy;
     const color = new THREE.Color();
-    if (dominant && emotionColorMap[dominant[0]]) {
-        color.set(emotionColorMap[dominant[0]]);
-        const intensity = Math.min(dominant[1] * 2, 1.0);
-        color.multiplyScalar(0.7 + 0.3 * intensity);
+
+    if (isObjectSchema) {
+      // NEW OBJECT-BASED SCHEMA (from API)
+      // Safety guard for malformed turn data.
+      if (!turnData || !Array.isArray(turnData.pca) || turnData.pca.length < 3) {
+        console.warn(`Skipping malformed turn data at index ${i}:`, turnData);
+        return; // Skip this iteration
+      }
+      if (!turnData.affect) turnData.affect = {}; // Ensure affect object exists
+
+      // --- FIX ---
+      // The PCA coordinates from the server are in a very small range (-0.6 to 0.6).
+      // We need to scale them up to make the stars visually distinct.
+      const [x, y, z] = turnData.pca;
+      const scale = 100; // Increase this value to spread the stars out more.
+      pos = new THREE.Vector3(x * scale, y * scale, z * scale);
+      
+      // Destructure properties from the turn object.
+      id = turnData.id;
+      speaker = turnData.speaker;
+      text = turnData.text;
+      phase = turnData.phase;
+      coh = turnData.coherence;
+      ali = turnData.alignment;
+      ref = turnData.reference;
+      drift = turnData.drift;
+      entropy = turnData.entropy;
+      
+      // Determine color based on the 'affect' object.
+      const dominant = Object.entries(turnData.affect).sort((a, b) => b[1] - a[1])[0];
+      if (dominant && emotionColorMap[dominant[0]]) {
+          color.set(emotionColorMap[dominant[0]]);
+          const intensity = Math.min(dominant[1] * 2, 1.0);
+          color.multiplyScalar(0.7 + 0.3 * intensity);
+      } else {
+          color.set(speaker === 'user' ? '#61dafb' : '#ffc34d');
+      }
+
     } else {
-        color.set(speaker === 'user' ? '#61dafb' : '#ffc34d');
+      // OLD ARRAY-BASED SCHEMA (for DEFAULT_TURNS)
+      [id, speaker, text, phase, coh, ali, ref] = turnData;
+      
+      // Re-implement the original positioning logic for the default simulation.
+      const radiusBase = 70, radiusSpan = 72, angleStep = (Math.PI * 2) / (TURNS.length + 6);
+      const r = radiusBase + (1 - coh) * radiusSpan;
+      const a = i * angleStep;
+      pos = new THREE.Vector3(Math.cos(a) * r, Math.sin(a) * r, (coh - 0.5) * 60);
+
+      // Set default values for metrics not present in the old data.
+      drift = 0;
+      entropy = 0;
+      color.set(speaker === 'user' ? '#61dafb' : '#ffc34d');
     }
-    stars.push({ id, speaker, text, coh, ali, ref, pos, drift: turnData.drift ?? 0, entropy: turnData.entropy ?? 0 });
+    
+    starPositions.push(pos.x, pos.y, pos.z);
+    stars.push({ id, speaker, text, coh, ali, ref, pos, drift: drift ?? 0, entropy: entropy ?? 0 });
     starColors.push(color.r, color.g, color.b);
     starSizes.push(3.5);
     starAlphas.push(1.0);
   });
+
   starMat = new THREE.ShaderMaterial({
     uniforms: { pointTexture: { value: new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/spark1.png') }, opacity: { value: 1.0 } },
     vertexShader: ` attribute float size; attribute vec3 color; attribute float alpha; varying vec3 vColor; varying float vAlpha; void main() { vColor = color; vAlpha = alpha; vec4 mvPosition = modelViewMatrix * vec4(position, 1.0); gl_PointSize = size * (500.0 / -mvPosition.z); gl_Position = projectionMatrix * mvPosition; }`,
@@ -622,7 +698,6 @@ function initConstellation(newTurnsData, resetAnimation = false) {
   scrub.max = String(TURNS.length - 1);
   playing = false;
   
-  // This logic is now aligned with the old working file.
   introAnimationDone = false;
   introStartTime = 0;
   playBtn.disabled = true;
@@ -664,15 +739,17 @@ function updateCoherenceFilter() {
     if (!points) return;
     coherenceValue.textContent = `${Math.round(parseFloat(coherenceSlider.value) * 100)}%`;
     setupRibbons();
-    // During playback, update visibility based on the current turn.
     updateLineVisibility();
 }
 
 function revealUpTo(idx){
   tIndex = idx;
   if (!TURNS[idx]) return;
-  const id = TURNS[idx][0];
-  const phase = TURNS[idx][3];
+  // Handle both array and object structures for backward compatibility with default data
+  const turnData = TURNS[idx];
+  const id = Array.isArray(turnData) ? turnData[0] : turnData.id;
+  const phase = Array.isArray(turnData) ? turnData[3] : turnData.phase;
+
   const turnText = langContent[currentLang]['turn-counter'].replace('{current}', id).replace('{total}', TURNS.length);
   tick.textContent = turnText;
   scrub.value = String(idx);
@@ -684,7 +761,6 @@ function updateLineVisibility() {
     if (!starMat) return;
     const coherenceThreshold = parseFloat(coherenceSlider.value);
     
-    // This logic is now aligned with the old working file.
     if (driftRibbon.geometry) {
       driftRibbon.visible = toggleDrift.checked;
     }
@@ -712,9 +788,13 @@ function updateLineVisibility() {
 
 function updateInspector(idx) {
     const turn = TURNS[idx];
-    document.getElementById('inspector-text').textContent = turn[2] ?? '';
-    document.getElementById('inspector-coh').textContent = `${Math.round(turn[4] * 100)}%`;
-    document.getElementById('inspector-ali').textContent = `${Math.round(turn[5] * 100)}%`;
+    const text = Array.isArray(turn) ? turn[2] : turn.text;
+    const coh = Array.isArray(turn) ? turn[4] : turn.coherence;
+    const ali = Array.isArray(turn) ? turn[5] : turn.alignment;
+
+    document.getElementById('inspector-text').textContent = text ?? '';
+    document.getElementById('inspector-coh').textContent = `${Math.round(coh * 100)}%`;
+    document.getElementById('inspector-ali').textContent = `${Math.round(ali * 100)}%`;
     inspectorPanel.style.display = 'block';
 }
 
@@ -745,7 +825,7 @@ renderer.domElement.onclick = () => {
 window.onmousemove = (event) => {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-  if (hoveredIndex > -1) {
+  if (hoveredIndex > -1 && stars[hoveredIndex]) {
     const s = stars[hoveredIndex];
     tooltip.style.opacity = '1';
     tooltip.style.left = `${event.clientX + 12}px`;
@@ -830,9 +910,8 @@ window.onload = () => {
     setLanguage(langFromUrl || savedLang);
     initConstellation(TURNS, false);
     
-    // This is the restored logic from the old working file.
     Object.values(returnRibbons).forEach(r => r.visible = true);
-    if(driftRibbon.geometry) driftRibbon.visible = true;
+    if(driftRibbon && driftRibbon.geometry) driftRibbon.visible = true;
 
     animate(performance.now());
 };
@@ -840,7 +919,5 @@ window.onload = () => {
 
 </body>
 </html>
-
-
 
 

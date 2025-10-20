@@ -10,7 +10,6 @@ from openai import OpenAI
 load_dotenv()  # ✅ must come before creating client
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 CORS(app)
@@ -58,6 +57,10 @@ def compute_semantic_metrics(turns):
         drift = round(abs(math.cos(i + 2)) * 0.2 + 0.3, 6)
         novelty = round(abs(math.sin(i + 0.5)) * 0.3 + 0.4, 6)
         cluster = (i % 3) + 1
+        
+        # --- FIX ---
+        # The PCA coordinates MUST be generated inside the loop.
+        # This ensures every turn gets a unique position.
         pca = list(np.random.uniform(-0.6, 0.6, 3))
 
         enriched = {
