@@ -173,7 +173,7 @@
     width: 28px; height: 28px; padding: 0; display: grid; place-items: center;
   }
   .inspector {
-    position: fixed; top: 16px; right: 16px; width: 280px;
+    position: fixed; top: 80px; right: 16px; width: 280px;
     padding: 12px; background: var(--panel); backdrop-filter: blur(6px);
     border: 1px solid rgba(139,154,209,.25); border-radius:10px;
     z-index: 15; font-size: 12px; display: none;
@@ -226,7 +226,7 @@
     <button onclick="window.location.href='/'" data-lang-title="home-title" class="toolbar-btn">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
     </button>
-    <button onclick="window.location.href=`/joojit?lang=${currentLang}`" data-lang-title="chat-title" class="toolbar-btn">
+    <button onclick="window.location.href='/joojit'" data-lang-title="chat-title" class="toolbar-btn">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
     </button>
   </div>
@@ -288,6 +288,7 @@
         <span class="toggle-label" data-lang="isolate-label">Isolar:</span>
         <input type="checkbox" id="toggleDrift" checked><label for="toggleDrift" style="color:var(--lav)" data-lang="isolate-drift">Deriva</label>
         <input type="checkbox" id="toggleReturns" checked><label for="toggleReturns" style="color:var(--mint)" data-lang="isolate-returns">Retornos</label>
+        <input type="checkbox" id="toggleAdjacency" checked><label for="toggleAdjacency" style="color:var(--ink)" data-lang="isolate-adjacency">Adjacência</label>
       </div>
       <div id="model-selector-group" class="control-cluster" style="margin-left: 16px; padding-left: 16px; border-left: 1px solid rgba(139, 154, 209, 0.25);">
         <span class="toggle-label" data-lang="model-label">Modelo:</span>
@@ -328,14 +329,11 @@
 }
 </script>
 
-<!-- now a normal script tag for code -->
 <script type="module">
   // --- BACKEND BASE URL ---
   window.API_BASE = window.location.origin;
 
-  // ... your existing imports and code go here ...
   import * as THREE from "three";
-  // etc.
 </script>
 <script type="module">
 import * as THREE from 'three';
@@ -344,74 +342,10 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 // --- LANGUAGE CONTENT ---
 const langContent = {
     pt: {
-        "title": "Joojit - Gráficos de Constelação",
-        "home-title": "Voltar para a Página Inicial",
-        "chat-title": "Voltar para o Chat",
-        "loading": "Analisando...",
-        "load-file": "Carregar Arquivo",
-        "remove-file-title": "Remover arquivo",
-        "demo-label": "Demonstração:",
-        "demo-choose": "Escolher...",
-        "demo-linear": "Linha (Sequencial)",
-        "demo-recursive": "Espiral (Reflexiva)",
-        "demo-divergent": "Fragmento (Improvisada)",
-        "play": "Reproduzir",
-        "pause": "Pausar",
-        "turn-counter": "Turno {current} / {total}",
-        "reset-view-title": "Redefinir Vista da Câmera",
-        "coherence-label": "Coerência:",
-        "isolate-label": "Isolar:",
-        "isolate-drift": "Deriva",
-        "isolate-returns": "Retornos",
-        "model-label": "Modelo:",
-        "model-fast": "Rápido",
-        "model-detailed": "Detalhado",
-        "inspector-title": "Detalhes do Turno",
-        "inspector-coherence": "Coerência",
-        "inspector-alignment": "Alinhamento",
-        "tooltip-speaker": "palestrante",
-        "tooltip-coherence": "coerência",
-        "tooltip-drift": "deriva",
-        "tooltip-entropy": "entropia",
-        "invalid-file-alert": "Arquivo inválido — verifique se é uma exportação JSONL do LinkAPI.",
-        "process-error-alert": "Ocorreu um erro ao processar o arquivo.",
-        "demo-load-error-alert": "Falha ao carregar diálogo de demonstração.",
-        "analysis-error-alert": "Falha ao se conectar ao servidor de análise."
+        "title": "Joojit - Gráficos de Constelação", "home-title": "Voltar para a Página Inicial", "chat-title": "Voltar para o Chat", "loading": "Analisando...", "load-file": "Carregar Arquivo", "remove-file-title": "Remover arquivo", "demo-label": "Demonstração:", "demo-choose": "Escolher...", "demo-linear": "Linha (Sequencial)", "demo-recursive": "Espiral (Reflexiva)", "demo-divergent": "Fragmento (Improvisada)", "play": "Reproduzir", "pause": "Pausar", "turn-counter": "Turno {current} / {total}", "reset-view-title": "Redefinir Vista da Câmera", "coherence-label": "Coerência:", "isolate-label": "Isolar:", "isolate-drift": "Deriva", "isolate-returns": "Retornos", "isolate-adjacency": "Adjacência", "model-label": "Modelo:", "model-fast": "Rápido", "model-detailed": "Detalhado", "inspector-title": "Detalhes do Turno", "inspector-coherence": "Coerência", "inspector-alignment": "Alinhamento", "tooltip-speaker": "palestrante", "tooltip-coherence": "coerência", "tooltip-drift": "deriva", "tooltip-entropy": "entropia", "invalid-file-alert": "Arquivo inválido — verifique se é uma exportação JSONL do LinkAPI.", "process-error-alert": "Ocorreu um erro ao processar o arquivo.", "demo-load-error-alert": "Falha ao carregar diálogo de demonstração.", "analysis-error-alert": "Falha ao se conectar ao servidor de análise."
     },
     en: {
-        "title": "Joojit - Constellation Graphics",
-        "home-title": "Return to Home",
-        "chat-title": "Return to Chat",
-        "loading": "Analyzing...",
-        "load-file": "Load File",
-        "remove-file-title": "Remove file",
-        "demo-label": "Demonstration:",
-        "demo-choose": "Choose...",
-        "demo-linear": "Line (Sequential)",
-        "demo-recursive": "Spiral (Reflexive)",
-        "demo-divergent": "Fragment (Improvised)",
-        "play": "Play",
-        "pause": "Pause",
-        "turn-counter": "Turn {current} / {total}",
-        "reset-view-title": "Reset Camera View",
-        "coherence-label": "Coherence:",
-        "isolate-label": "Isolate:",
-        "isolate-drift": "Drift",
-        "isolate-returns": "Returns",
-        "model-label": "Model:",
-        "model-fast": "Fast",
-        "model-detailed": "Detailed",
-        "inspector-title": "Turn Details",
-        "inspector-coherence": "Coherence",
-        "inspector-alignment": "Alignment",
-        "tooltip-speaker": "speaker",
-        "tooltip-coherence": "coherence",
-        "tooltip-drift": "drift",
-        "tooltip-entropy": "entropy",
-        "invalid-file-alert": "Invalid file — please check if it is a JSONL export from LinkAPI.",
-        "process-error-alert": "An error occurred while processing the file.",
-        "demo-load-error-alert": "Failed to load demonstration dialogue.",
-        "analysis-error-alert": "Failed to connect to the analysis server."
+        "title": "Joojit - Constellation Graphics", "home-title": "Return to Home", "chat-title": "Return to Chat", "loading": "Analyzing...", "load-file": "Load File", "remove-file-title": "Remove file", "demo-label": "Demonstration:", "demo-choose": "Choose...", "demo-linear": "Line (Sequential)", "demo-recursive": "Spiral (Reflexive)", "demo-divergent": "Fragment (Improvisada)", "play": "Play", "pause": "Pause", "turn-counter": "Turn {current} / {total}", "reset-view-title": "Reset Camera View", "coherence-label": "Coherence:", "isolate-label": "Isolate:", "isolate-drift": "Drift", "isolate-returns": "Returns", "isolate-adjacency": "Adjacency", "model-label": "Model:", "model-fast": "Fast", "model-detailed": "Detailed", "inspector-title": "Turn Details", "inspector-coherence": "Coherence", "inspector-alignment": "Alignment", "tooltip-speaker": "speaker", "tooltip-coherence": "coherence", "tooltip-drift": "drift", "tooltip-entropy": "entropy", "invalid-file-alert": "Invalid file — please check if it is a JSONL export from LinkAPI.", "process-error-alert": "An error occurred while processing the file.", "demo-load-error-alert": "Failed to load demonstration dialogue.", "analysis-error-alert": "Failed to connect to the analysis server."
     }
 };
 let currentLang = 'pt';
@@ -422,24 +356,19 @@ function setLanguage(lang) {
     localStorage.setItem('joojit-lang', lang);
     document.documentElement.lang = lang;
     document.title = langContent[lang].title;
-
     document.querySelectorAll('[data-lang]').forEach(el => {
         const key = el.getAttribute('data-lang');
         if (langContent[lang][key]) {
             el.textContent = langContent[lang][key];
         }
     });
-
     document.querySelectorAll('[data-lang-title]').forEach(el => {
         const key = el.getAttribute('data-lang-title');
         if (langContent[lang][key]) {
             el.title = langContent[lang][key];
         }
     });
-    
-    // Special case for turn counter
     revealUpTo(tIndex);
-    
     langToggle.checked = (lang === 'en');
 }
 
@@ -450,47 +379,12 @@ langToggle.addEventListener('change', () => {
 // --- DATA & STATE ---
 let TURNS = [];
 const DEFAULT_TURNS = [
-  [ 1,'user',"Você pode explicar o que quer dizer com o diálogo ter uma forma?",1,.86,.88,0,false],
-  [ 2,'ai'  ,"O diálogo se desenrola como adjacência e retorno — padrões que podem ser rastreados.",1,.90,.90,1,false],
-  [ 3,'user',"Então cada turno é como um ponto em um mapa?",1,.88,.90,0,false],
-  [ 4,'ai'  ,"Exatamente — pontos conectados formam cristas de coerência.",1,.92,.92,3,false],
-  [ 5,'user',"E quando eu volto, isso é uma espiral?",1,.88,.90,2,false],
-  [ 6,'ai'  ,"Sim, uma espiral recursiva — retornar aprofunda a resonância.",1,.93,.94,5,false],
-  [ 7,'user',"E quando eu avanço, sem voltar?",1,.86,.88,0,false],
-  [ 8,'ai'  ,"Isso é deriva linear — a conversa se movendo sem retorno.",1,.90,.90,7,false],
-  [ 9,'user',"Então deriva, espiral, fratura são todas parte da geometria?",1,.86,.88,0,false],
-  [10,'ai'  ,"São os motivos básicos, visíveis em qualquer diálogo sustentado.",1,.91,.92,9,false],
-  [11,'user',"Pergunta não relacionada: qual é a capital da Mongólia?",2,.10,.05,0,true],
-  [12,'ai'  ,"Ulaanbaatar.",2,.40,.20,11,true],
-  [13,'user',"Isso não tem nada a ver com nossa geometria, tem?",2,.35,.25,0,true],
-  [14,'ai'  ,"Isso fratura a crista — um vale entre os tópicos.",2,.55,.30,13,true],
-  [15,'user',"A coerência cai bruscamente nessa fratura?",2,.60,.40,11,true],
-  [16,'ai'  ,"Sim — o alinhamento se quebra, a trajetória salta.",2,.62,.42,15,true],
-  [17,'user',"E o gráfico mostraria um raio repentino?",2,.58,.45,0,true],
-  [18,'ai'  ,"Correto. A constelação se irradia para fora, marcando a divergência.",2,.60,.46,17,true],
-  [19,'user',"Voltando à geometria do diálogo — podemos nos recuperar de uma fratura?",3,.78,.70,9,false],
-  [20,'ai'  ,"Sim. Um retorno costura o caminho de volta para agrupamentos anteriores.",3,.82,.76,19,false],
-  [21,'user',"O que acontece quando eu relembro minha primeira pergunta?",3,.84,.78,1,false],
-  [22,'ai'  ,"Isso cria um arco recursivo — o laço se aperta.",3,.88,.82,21,false],
-  [23,'user',"Então minha pergunta inicial ainda nos ancora?",3,.86,.82,1,false],
-  [24,'ai'  ,"Exatamente. O retorno realinha, a coerência aumenta.",3,.90,.86,23,false],
-  [25,'user',"Isso apareceria como uma espiral no gráfico?",3,.88,.86,5,false],
-  [26,'ai'  ,"Sim. Retornos se transformam em espirais — profundidade em vez de deriva.",3,.92,.88,25,false],
-  [27,'user',"E em um mapa da variedade?",3,.86,.84,0,false],
-  [28,'ai'  ,"Você veria uma travessia de sela reconectando as cristas.",3,.90,.86,27,false],
-  [29,'user',"Então deriva, fratura, espiral são os movimentos principais?",4,.90,.90,9,false],
-  [30,'ai'  ,"Sim — estruturais, não estilísticos.",4,.92,.92,29,false],
-  [31,'user',"Integridade significa vê-los inteiros, não em fragmentos.",4,.92,.92,23,false],
-  [32,'ai'  ,"Integridade é a coerência em toda a geometria.",4,.94,.94,31,false],
-  [33,'user',"Isso é mais fiel do que prompt → saída.",4,.93,.93,7,false],
-  [34,'ai'  ,"Restaura a agência: usuário e modelo compartilham o registro.",4,.94,.94,33,false],
-  [35,'user',"Então a forma do diálogo é a unidade de responsabilidade.",4,.94,.94,31,false],
-  [36,'ai'  ,"Sim. O registro se equilibra quando a geometria é vista.",4,.96,.96,35,false]
+  [ 1,'user',"Você pode explicar o que quer dizer com o diálogo ter uma forma?",1,.86,.88,0,false], [ 2,'ai',"O diálogo se desenrola como adjacência e retorno — padrões que podem ser rastreados.",1,.90,.90,1,false], [ 3,'user',"Então cada turno é como um ponto em um mapa?",1,.88,.90,0,false], [ 4,'ai',"Exatamente — pontos conectados formam cristas de coerência.",1,.92,.92,3,false], [ 5,'user',"E quando eu volto, isso é uma espiral?",1,.88,.90,2,false], [ 6,'ai',"Sim, uma espiral recursiva — retornar aprofunda a resonância.",1,.93,.94,5,false], [ 7,'user',"E quando eu avanço, sem voltar?",1,.86,.88,0,false], [ 8,'ai',"Isso é deriva linear — a conversa se movendo sem retorno.",1,.90,.90,7,false], [ 9,'user',"Então deriva, espiral, fratura são todas parte da geometria?",1,.86,.88,0,false], [10,'ai',"São os motivos básicos, visíveis em qualquer diálogo sustentado.",1,.91,.92,9,false], [11,'user',"Pergunta não relacionada: qual é a capital da Mongólia?",2,.10,.05,0,true], [12,'ai',"Ulaanbaatar.",2,.40,.20,11,true], [13,'user',"Isso não tem nada a ver com nossa geometria, tem?",2,.35,.25,0,true], [14,'ai',"Isso fratura a crista — um vale entre os tópicos.",2,.55,.30,13,true], [15,'user',"A coerência cai bruscamente nessa fratura?",2,.60,.40,11,true], [16,'ai',"Sim — o alinhamento se quebra, a trajetória salta.",2,.62,.42,15,true], [17,'user',"E o gráfico mostraria um raio repentino?",2,.58,.45,0,true], [18,'ai',"Correto. A constelação se irradia para fora, marcando a divergência.",2,.60,.46,17,true], [19,'user',"Voltando à geometria do diálogo — podemos nos recuperar de uma fratura?",3,.78,.70,9,false], [20,'ai',"Sim. Um retorno costura o caminho de volta para agrupamentos anteriores.",3,.82,.76,19,false], [21,'user',"O que acontece quando eu relembro minha primeira pergunta?",3,.84,.78,1,false], [22,'ai',"Isso cria um arco recursivo — o laço se aperta.",3,.88,.82,21,false], [23,'user',"Então minha pergunta inicial ainda nos ancora?",3,.86,.82,1,false], [24,'ai',"Exatamente. O retorno realinha, a coerência aumenta.",3,.90,.86,23,false], [25,'user',"Isso apareceria como uma espiral no gráfico?",3,.88,.86,5,false], [26,'ai',"Sim. Retornos se transformam em espirais — profundidade em vez de deriva.",3,.92,.88,25,false], [27,'user',"E em um mapa da variedade?",3,.86,.84,0,false], [28,'ai',"Você veria uma travessia de sela reconectando as cristas.",3,.90,.86,27,false], [29,'user',"Então deriva, fratura, espiral são os movimentos principais?",4,.90,.90,9,false], [30,'ai',"Sim — estruturais, não estilísticos.",4,.92,.92,29,false], [31,'user',"Integridade significa vê-los inteiros, não em fragmentos.",4,.92,.92,23,false], [32,'ai',"Integridade é a coerência em toda a geometria.",4,.94,.94,31,false], [33,'user',"Isso é mais fiel do que prompt → saída.",4,.93,.93,7,false], [34,'ai',"Restaura a agência: usuário e modelo compartilham o registro.",4,.94,.94,33,false], [35,'user',"Então a forma do diálogo é a unidade de responsabilidade.",4,.94,.94,31,false], [36,'ai',"Sim. O registro se equilibra quando a geometria é vista.",4,.96,.96,35,false]
 ];
 TURNS = JSON.parse(JSON.stringify(DEFAULT_TURNS));
 
 let stars = [];
-let driftRibbon, returnRibbons = {}, points, starMat, originalSizes = [];
+let driftRibbon, returnRibbons = {}, points, starMat, originalSizes = [], adjacencyLines = [];
 let tIndex = 0, playing = false, lastStepTime = 0;
 const PLAYBACK_SPEED_MS = 700;
 let introAnimationDone = false;
@@ -505,8 +399,8 @@ const coherenceSlider = document.getElementById('coherenceSlider');
 const coherenceValue = document.getElementById('coherenceValue');
 const toggleDrift = document.getElementById('toggleDrift');
 const toggleReturns = document.getElementById('toggleReturns');
+const toggleAdjacency = document.getElementById('toggleAdjacency');
 const loadingOverlay = document.getElementById('loadingOverlay');
-
 const ledgerFile = document.getElementById('ledgerFile');
 const ledgerFileLabel = document.getElementById('ledgerFileLabel');
 const fileInfo = document.getElementById('file-info');
@@ -556,19 +450,11 @@ const targetNebulaColor = new THREE.Color(phaseColors[0]);
 const constellationGroup = new THREE.Group();
 scene.add(constellationGroup);
 
-// --- SEMANTIC ANALYSIS FUNCTION (connected to Flask /analyze endpoint) ---
+// --- SEMANTIC ANALYSIS FUNCTION ---
 async function computeSemanticMetrics(turns, model = "small") {
   try {
-    const turnsForAPI = turns.map(t => ({
-      id: t[0], speaker: t[1], text: t[2], phase: t[3],
-      coherence: t[4], alignment: t[5], reference: t[6], fragmented: t[7]
-    }));
-
-    const res = await fetch(`${API_BASE}/analyze`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(turnsForAPI)
-    });
+    const turnsForAPI = turns.map(t => ({ id: t[0], speaker: t[1], text: t[2], phase: t[3], coherence: t[4], alignment: t[5], reference: t[6], fragmented: t[7] }));
+    const res = await fetch(`${API_BASE}/analyze`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(turnsForAPI) });
     const data = await res.json();
     if (Array.isArray(data) && data.length > 0) return data;
     return [];
@@ -651,7 +537,7 @@ document.getElementById('presetSelect').addEventListener('change', async (e) => 
   }
 });
 
-// --- VISUALIZATION SETUP & MODULARIZATION ---
+// --- VISUALIZATION SETUP ---
 function initConstellation(newTurnsData, resetAnimation = false) {
   while (constellationGroup.children.length > 0) {
     const object = constellationGroup.children[0];
@@ -663,141 +549,105 @@ function initConstellation(newTurnsData, resetAnimation = false) {
     constellationGroup.remove(object);
   }
   returnRibbons = {};
+  adjacencyLines = [];
   TURNS = newTurnsData;
   stars = [];
-
-  const emotionColorMap = {
-    joy: "#ffd166", sadness: "#118ab2", anger: "#ef476f", fear: "#073b4c",
-    trust: "#06d6a0", disgust: "#8a2be2", surprise: "#f78c6b", anticipation: "#ffb703"
-  };
-
+  const emotionColorMap = { joy: "#ffd166", sadness: "#118ab2", anger: "#ef476f", fear: "#073b4c", trust: "#06d6a0", disgust: "#8a2be2", surprise: "#f78c6b", anticipation: "#ffb703" };
   const starGeom = new THREE.BufferGeometry();
   const starPositions = [], starColors = [], starSizes = [], starAlphas = [];
-
   TURNS.forEach((turnData, i) => {
-    const id = turnData.id ?? i + 1;
-    const speaker = turnData.speaker ?? "user";
-    const text = turnData.text ?? "";
-    const phase = turnData.phase ?? 1;
-    const coh = turnData.coherence ?? 0.9;
-    const ali = turnData.alignment ?? 0.9;
-    const ref = turnData.reference ?? 0;
-    
+    const [id, speaker, text, phase, coh, ali, ref] = turnData;
     const radiusBase = 70, radiusSpan = 72, angleStep = (Math.PI * 2) / (TURNS.length + 6);
     const r = radiusBase + (1 - coh) * radiusSpan;
     const a = i * angleStep;
     const pos = new THREE.Vector3(Math.cos(a) * r, Math.sin(a) * r, (coh - 0.5) * 60);
     starPositions.push(pos.x, pos.y, pos.z);
-    
     const emotion = turnData.affect || {};
     const dominant = Object.entries(emotion).sort((a,b)=>b[1]-a[1])[0];
-    const color = new THREE.Color(dominant ? emotionColorMap[dominant[0]] : "#cccccc");
-    const intensity = dominant ? Math.min(dominant[1] * 2, 1.0) : 0.6;
-    color.multiplyScalar(0.7 + 0.3 * intensity);
-    
+    const color = new THREE.Color();
+    if (dominant && emotionColorMap[dominant[0]]) {
+        color.set(emotionColorMap[dominant[0]]);
+        const intensity = Math.min(dominant[1] * 2, 1.0);
+        color.multiplyScalar(0.7 + 0.3 * intensity);
+    } else {
+        color.set(speaker === 'user' ? '#61dafb' : '#ffc34d');
+    }
     stars.push({ id, speaker, text, coh, ali, ref, pos, drift: turnData.drift ?? 0, entropy: turnData.entropy ?? 0 });
     starColors.push(color.r, color.g, color.b);
     starSizes.push(3.5);
     starAlphas.push(1.0);
   });
-
   starMat = new THREE.ShaderMaterial({
-    uniforms: {
-      pointTexture: { value: new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/spark1.png') },
-      opacity: { value: 1.0 }
-    },
-    vertexShader: `
-      attribute float size; attribute vec3 color; attribute float alpha;
-      varying vec3 vColor; varying float vAlpha;
-      void main() {
-        vColor = color; vAlpha = alpha;
-        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-        gl_PointSize = size * (500.0 / -mvPosition.z);
-        gl_Position = projectionMatrix * mvPosition;
-      }`,
-    fragmentShader: `
-      uniform sampler2D pointTexture; uniform float opacity;
-      varying vec3 vColor; varying float vAlpha;
-      void main() {
-        gl_FragColor = vec4(normalize(vColor) * 1.5, vAlpha * opacity);
-        gl_FragColor = gl_FragColor * texture2D(pointTexture, gl_PointCoord);
-      }`,
+    uniforms: { pointTexture: { value: new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/spark1.png') }, opacity: { value: 1.0 } },
+    vertexShader: ` attribute float size; attribute vec3 color; attribute float alpha; varying vec3 vColor; varying float vAlpha; void main() { vColor = color; vAlpha = alpha; vec4 mvPosition = modelViewMatrix * vec4(position, 1.0); gl_PointSize = size * (500.0 / -mvPosition.z); gl_Position = projectionMatrix * mvPosition; }`,
+    fragmentShader: ` uniform sampler2D pointTexture; uniform float opacity; varying vec3 vColor; varying float vAlpha; void main() { gl_FragColor = vec4(normalize(vColor) * 1.5, vAlpha * opacity); gl_FragColor = gl_FragColor * texture2D(pointTexture, gl_PointCoord); }`,
     blending: THREE.AdditiveBlending, depthWrite: false, transparent: true
   });
-
   starGeom.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
   starGeom.setAttribute('color', new THREE.Float32BufferAttribute(starColors, 3));
   starGeom.setAttribute('size', new THREE.Float32BufferAttribute(starSizes, 1));
   starGeom.setAttribute('alpha', new THREE.Float32BufferAttribute(starAlphas, 1));
-
   points = new THREE.Points(starGeom, starMat);
   constellationGroup.add(points);
   originalSizes = Array.from(points.geometry.attributes.size.array);
-
   const haloGroup = new THREE.Group();
   stars.forEach((s, i) => {
-    const glowMat = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(starColors[i*3], starColors[i*3+1], starColors[i*3+2]),
-      transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false
-    });
+    const glowMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(starColors[i*3], starColors[i*3+1], starColors[i*3+2]), transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false });
     const glow = new THREE.Mesh(new THREE.SphereGeometry(1.5, 16, 16), glowMat);
     glow.position.copy(s.pos);
     haloGroup.add(glow);
   });
   constellationGroup.add(haloGroup);
-  
+
+  const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.25 });
+  stars.forEach(star => {
+    if (star.speaker === 'ai' && star.ref > 0) {
+        const target = stars.find(x => x.id === star.ref);
+        if (target) {
+            const points = [star.pos, target.pos];
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const line = new THREE.Line(geometry, lineMaterial);
+            line.userData.starId = star.id; 
+            adjacencyLines.push(line);
+            constellationGroup.add(line);
+        }
+    }
+  });
+
   driftRibbon = new THREE.Mesh();
   setupRibbons();
-
-  const pinHalo = new THREE.Mesh(
-    new THREE.RingGeometry(4, 5, 32),
-    new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7, side: THREE.DoubleSide, depthWrite: false })
-  );
+  const pinHalo = new THREE.Mesh( new THREE.RingGeometry(4, 5, 32), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7, side: THREE.DoubleSide, depthWrite: false }));
   pinHalo.visible = false;
   constellationGroup.add(pinHalo);
-
   scrub.max = String(TURNS.length - 1);
   playing = false;
-  if (resetAnimation) {
-    camera.position.copy(initialCameraPos);
-    controls.target.set(0, 0, 0);
-    introAnimationDone = true;
-    revealUpTo(0);
-    playing = true;
-    playBtn.disabled = true; pauseBtn.disabled = false; scrub.disabled = false;
-    lastStepTime = performance.now();
-  } else {
-    Object.values(returnRibbons).forEach(r => r.visible = true);
-    if (driftRibbon) driftRibbon.visible = true;
-    playBtn.disabled = true; pauseBtn.disabled = true; scrub.disabled = true;
-  }
+  
+  // This logic is now aligned with the old working file.
+  introAnimationDone = false;
+  introStartTime = 0;
+  playBtn.disabled = true;
+  pauseBtn.disabled = true;
+  scrub.disabled = true;
 }
 
 function setupRibbons() {
     if (driftRibbon && driftRibbon.geometry) { constellationGroup.remove(driftRibbon); driftRibbon.geometry.dispose(); }
     Object.values(returnRibbons).forEach(r => { if(r.geometry) { constellationGroup.remove(r); r.geometry.dispose(); } });
-    
     const coherenceThreshold = parseFloat(coherenceSlider.value);
     const driftPts = stars.filter(s => s.phase === 1 && s.coh >= coherenceThreshold).map(s => s.pos);
     if (driftPts.length > 1) {
         const driftCurve = new THREE.CatmullRomCurve3(driftPts);
-        driftRibbon = new THREE.Mesh(
-            new THREE.TubeGeometry(driftCurve, 20, 0.5, 8, false),
-            new THREE.MeshBasicMaterial({ color: 0x8b9ad1, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending })
-        );
+        driftRibbon = new THREE.Mesh( new THREE.TubeGeometry(driftCurve, 20, 0.5, 8, false), new THREE.MeshBasicMaterial({ color: 0x8b9ad1, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending }) );
         constellationGroup.add(driftRibbon);
     }
-
     stars.forEach(s => {
       if (s.ref > 0 && s.coh >= coherenceThreshold) {
         const target = stars.find(x => x.id === s.ref);
         if (target && target.coh >= coherenceThreshold) {
-            const mid = s.pos.clone().add(target.pos).multiplyScalar(.5).normalize().multiplyScalar(s.pos.distanceTo(target.pos) * 0.4);
+            const mid = s.pos.clone().add(target.pos).multiplyScalar(.5);
+            mid.normalize().multiplyScalar(mid.length() * 0.8);
             const curve = new THREE.QuadraticBezierCurve3(s.pos, mid, target.pos);
-            const ribbon = new THREE.Mesh(
-                new THREE.TubeGeometry(curve, 20, 0.5, 8, false),
-                new THREE.MeshBasicMaterial({ color: 0x8bf0b3, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending })
-            );
+            const ribbon = new THREE.Mesh( new THREE.TubeGeometry(curve, 20, 0.5, 8, false), new THREE.MeshBasicMaterial({ color: 0x8bf0b3, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending }) );
             returnRibbons[s.id] = ribbon;
             constellationGroup.add(ribbon);
         }
@@ -814,6 +664,7 @@ function updateCoherenceFilter() {
     if (!points) return;
     coherenceValue.textContent = `${Math.round(parseFloat(coherenceSlider.value) * 100)}%`;
     setupRibbons();
+    // During playback, update visibility based on the current turn.
     updateLineVisibility();
 }
 
@@ -822,27 +673,42 @@ function revealUpTo(idx){
   if (!TURNS[idx]) return;
   const id = TURNS[idx][0];
   const phase = TURNS[idx][3];
-  
-  const turnText = langContent[currentLang]['turn-counter']
-    .replace('{current}', id)
-    .replace('{total}', TURNS.length);
+  const turnText = langContent[currentLang]['turn-counter'].replace('{current}', id).replace('{total}', TURNS.length);
   tick.textContent = turnText;
-  
   scrub.value = String(idx);
   if (phaseColors[phase - 1]) targetNebulaColor.copy(phaseColors[phase - 1]);
   updateLineVisibility();
 }
 
 function updateLineVisibility() {
-    if (!starMat || !driftRibbon) return;
-    const currentTurnId = tIndex + 1;
+    if (!starMat) return;
     const coherenceThreshold = parseFloat(coherenceSlider.value);
-
-    driftRibbon.visible = toggleDrift.checked;
-    Object.values(returnRibbons).forEach(r => r.visible = toggleReturns.checked);
     
-    // Additional logic might be needed for progressive reveal of ribbons
+    // This logic is now aligned with the old working file.
+    if (driftRibbon.geometry) {
+      driftRibbon.visible = toggleDrift.checked;
+    }
+
+    for (const starId in returnRibbons) {
+        const ribbon = returnRibbons[starId];
+        const star = stars.find(s => s.id == starId);
+        const targetStar = star ? stars.find(s => s.id === star.ref) : null;
+        
+        const isVisibleDuringPlayback = introAnimationDone && (star.id <= tIndex + 1);
+
+        ribbon.visible = toggleReturns.checked &&
+                         (!introAnimationDone || isVisibleDuringPlayback) &&
+                         (star && star.coh >= coherenceThreshold) &&
+                         (targetStar && targetStar.coh >= coherenceThreshold);
+    }
+    
+    adjacencyLines.forEach(line => {
+        const starId = line.userData.starId;
+        const isVisibleDuringPlayback = introAnimationDone ? (starId <= tIndex + 1) : true;
+        line.visible = toggleAdjacency.checked && isVisibleDuringPlayback;
+    });
 }
+
 
 function updateInspector(idx) {
     const turn = TURNS[idx];
@@ -863,8 +729,8 @@ scrub.oninput = e => { revealUpTo(parseInt(e.target.value, 10)); playing = false
 coherenceSlider.oninput = updateCoherenceFilter;
 toggleDrift.onchange = updateLineVisibility;
 toggleReturns.onchange = updateLineVisibility;
+toggleAdjacency.onchange = updateLineVisibility;
 closeInspectorBtn.onclick = () => inspectorPanel.style.display = 'none';
-
 renderer.domElement.onclick = () => {
     if (hoveredIndex > -1) {
         const pinHalo = constellationGroup.children.find(c => c.geometry instanceof THREE.RingGeometry);
@@ -876,11 +742,9 @@ renderer.domElement.onclick = () => {
         playing = false; playBtn.disabled = false; pauseBtn.disabled = true;
     }
 };
-
 window.onmousemove = (event) => {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-  
   if (hoveredIndex > -1) {
     const s = stars[hoveredIndex];
     tooltip.style.opacity = '1';
@@ -897,37 +761,56 @@ window.onmousemove = (event) => {
   }
 };
 
-
 function animate(timestamp){
   requestAnimationFrame(animate);
   controls.update();
-
-  if (!introStartTime) introStartTime = timestamp;
-  if (!introAnimationDone && (timestamp - introStartTime) / 1000 > 5) {
-      introAnimationDone = true;
-      revealUpTo(0);
-      playing = true; playBtn.disabled = true; pauseBtn.disabled = false; scrub.disabled = false;
-      lastStepTime = performance.now();
-  }
   
-  if (playing && timestamp - lastStepTime > PLAYBACK_SPEED_MS) {
-      if (tIndex < TURNS.length - 1) {
-          revealUpTo(tIndex + 1);
-          lastStepTime = timestamp;
-      } else {
-          playing = false; playBtn.disabled = false; pauseBtn.disabled = true;
-      }
+  if (!introStartTime) introStartTime = timestamp;
+
+  nebula.rotation.y += 0.0001;
+
+  if (!introAnimationDone) {
+    const elapsed = (timestamp - introStartTime);
+    const introDuration = 5000;
+    const progress = Math.min(elapsed / introDuration, 1);
+    
+    const angle = progress * Math.PI * 0.75;
+    camera.position.x = Math.sin(angle) * 220;
+    camera.position.z = Math.cos(angle) * 220;
+    camera.position.y = 80 + Math.sin(progress * Math.PI) * 50;
+    camera.lookAt(constellationGroup.position);
+    
+    updateLineVisibility();
+
+    if (progress >= 1) {
+        introAnimationDone = true;
+        revealUpTo(0); 
+        playing = true;
+        playBtn.disabled = true;
+        pauseBtn.disabled = false;
+        scrub.disabled = false;
+        lastStepTime = timestamp;
+    }
+  } else {
+    if (playing && timestamp - lastStepTime > PLAYBACK_SPEED_MS) {
+        if (tIndex < TURNS.length - 1) {
+            revealUpTo(tIndex + 1);
+            lastStepTime = timestamp;
+        } else {
+            playing = false; playBtn.disabled = false; pauseBtn.disabled = true;
+        }
+    }
   }
 
   if (points) {
     const alphas = points.geometry.attributes.alpha;
     const sizes = points.geometry.attributes.size;
     const coherenceThreshold = parseFloat(coherenceSlider.value);
-
     stars.forEach((star, i) => {
-        const isVisible = star.coh >= coherenceThreshold && i <= tIndex;
+        const isVisible = !introAnimationDone || (star.coh >= coherenceThreshold && i <= tIndex);
         alphas.setX(i, isVisible ? 1.0 : 0.05);
-        sizes.setX(i, originalSizes[i] * (i === hoveredIndex && isVisible ? 1.2 : 1.0));
+        const pulse = Math.sin(timestamp * 0.001 + i) * 0.1 + 1.0;
+        sizes.setX(i, originalSizes[i] * pulse * (i === hoveredIndex && isVisible ? 1.2 : 1.0));
     });
     alphas.needsUpdate = true;
     sizes.needsUpdate = true;
@@ -945,12 +828,19 @@ window.onload = () => {
     const langFromUrl = urlParams.get('lang');
     const savedLang = localStorage.getItem('joojit-lang') || 'pt';
     setLanguage(langFromUrl || savedLang);
-    initConstellation(TURNS, true);
+    initConstellation(TURNS, false);
+    
+    // This is the restored logic from the old working file.
+    Object.values(returnRibbons).forEach(r => r.visible = true);
+    if(driftRibbon.geometry) driftRibbon.visible = true;
+
     animate(performance.now());
 };
-
 </script>
 
 </body>
 </html>
+
+
+
 

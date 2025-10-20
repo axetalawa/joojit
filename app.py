@@ -3,6 +3,14 @@ from flask_cors import CORS
 import os, math, numpy as np, re
 import json
 from datetime import datetime
+from dotenv import load_dotenv
+
+from openai import OpenAI
+
+load_dotenv()  # ✅ must come before creating client
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 CORS(app)
@@ -84,33 +92,6 @@ def joojit():
 def constellation():
     return render_template('constellation.html')
 
-@app.route('/ask', methods=['POST'])
-def ask():
-    try:
-        data = request.get_json()
-        prompt = data.get("prompt", "").strip()
-        if not prompt:
-            return jsonify({"error": "Empty prompt"}), 400
-
-        # Call OpenAI or any backend model
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are Joojit, an experimental dialogic engine."},
-                {"role": "user", "content": prompt}
-            ]
-        )
-
-        reply = response.choices[0].message.content.strip()
-        return jsonify({
-            "reply": reply,
-            "model": "gpt-4o-mini"
-        })
-
-    except Exception as e:
-        print("Error in /ask:", e)
-        return jsonify({"error": str(e)}), 500
-
 @app.route("/analyze", methods=["POST"])
 def analyze():
     try:
@@ -146,7 +127,33 @@ def export_conversation():
     except Exception as e:
         print("❌ Error exporting:", e)
         return jsonify({"error": str(e)}), 500
+    
+# --- AI Chat Endpoint ---
+@app.route('/ask', methods=['POST'])
+def ask():
+    try:
+        data = request.get_json(force=True)
+        prompt = data.get("prompt", "").strip()
+        if not prompt:
+            return jsonify({"error": "Empty prompt"}), 400
 
+        print(f"🧠 Joojit received: {prompt}")
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are Joojit, an experimental dialogue engine that analyzes conversational geometry."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+
+        reply = response.choices[0].message.content.strip()
+        print("💬 Joojit reply:", reply)
+        return jsonify({"reply": reply})
+
+    except Exception as e:
+        print("❌ /ask error:", e)
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     import os

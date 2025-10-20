@@ -7,10 +7,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root {
-      --primary-ion: #EAEAEA; /* A clean, slightly off-white */
-      --hover-solar: #FFEF00; /* Vibrant yellow for highlights */
-      --purple-accent: #8A2BE2; /* For AI responses */
-      --vibrant-blue: #00FFF7; /* For user prompts */
+      --primary-ion: #EAEAEA;
+      --hover-solar: #FFEF00;
+      --purple-accent: #7b42f5; /* Final AI response color */
+      --vibrant-blue: #26debd; /* Final user prompt color */
       --background-dark: #050505;
       --panel-background: #0a0015;
       --input-background: #101010;
@@ -20,7 +20,7 @@
     /* Basic setup */
     html, body {
         scroll-behavior: smooth;
-        overflow-x: hidden; /* Prevent horizontal scrollbar on the body */
+        overflow-x: hidden;
     }
     body {
       background-color: var(--background-dark);
@@ -30,7 +30,7 @@
     
     main {
       display: flex;
-      width: 100vw; /* Single view container */
+      width: 100vw;
       height: 100vh;
     }
 
@@ -38,11 +38,12 @@
       background-color: transparent;
       transition: box-shadow 0.3s ease;
       box-shadow: 0 5px 25px -5px var(--primary-ion);
+      z-index: 50;
     }
     .top-bar:hover {
         box-shadow: 0 5px 25px -5px var(--hover-solar);
     }
-     /* Language Toggle Styles - Copied from index.html */
+     /* Language Toggle Styles */
     .lang-toggle {
         display: flex;
         align-items: center;
@@ -89,28 +90,25 @@
         transform: translateX(26px);
     }
 
-    /* Window and Icon Styles */
-    .window-content {
-      height: 100%;
-      width: 100%;
-      padding: 1rem;
-      display: flex;
-      flex-direction: column;
-      max-width: 490px;
-      margin: 0 auto;
-    }
-    
     /* Chat History / Output Area */
     .output-area {
-      height: 100%;
-      width: 100%;
-      overflow-y: auto;
-      color: white;
-      /* Removed monospace font to better support formatted text */
-      background-color: transparent;
-      border-radius: 8px;
-      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: 1.5rem;
+      padding-bottom: 2.5rem; /* Increased for more breathing room */
+      overflow-y: auto;     
       scroll-behavior: smooth;
+    }
+
+    /* Center the chat history and give it a readable width */
+    #spiral-output {
+      max-width: 500px;
+      margin: 0 auto; /* centers it horizontally */
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
     }
     .chat-message {
         padding: 8px 12px;
@@ -118,7 +116,7 @@
         margin-bottom: 8px;
         max-width: 85%;
         word-wrap: break-word;
-        line-height: 1.6; /* Improved line spacing */
+        line-height: 1.6;
     }
     .user-prompt {
         background-color: var(--vibrant-blue);
@@ -133,12 +131,8 @@
         align-self: flex-start;
         text-align: left;
     }
-    .ai-response p, .ai-response ol {
-        margin: 0;
-    }
-    .ai-response p:not(:last-child) {
-        margin-bottom: 0.5rem;
-    }
+    .ai-response p, .ai-response ol { margin: 0; }
+    .ai-response p:not(:last-child) { margin-bottom: 0.5rem; }
 
     /* Input Area & Toolbar */
     #chatInput {
@@ -190,116 +184,82 @@
         box-shadow: inset 0 0 10px 2px var(--primary-ion);
         z-index: 10;
     }
-    .toolbar-btn svg {
-        stroke: var(--primary-ion);
-        transition: stroke 0.2s ease;
-    }
-    .toolbar-btn:hover:not(:disabled) {
-        border-color: var(--hover-solar);
-        box-shadow: inset 0 0 10px 2px var(--hover-solar);
-    }
-    .toolbar-btn:hover:not(:disabled) svg {
-        stroke: var(--hover-solar);
-    }
-    .toolbar-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
+    .toolbar-btn svg { stroke: var(--primary-ion); transition: stroke 0.2s ease; }
+    .toolbar-btn:hover:not(:disabled) { border-color: var(--hover-solar); box-shadow: inset 0 0 10px 2px var(--hover-solar); }
+    .toolbar-btn:hover:not(:disabled) svg { stroke: var(--hover-solar); }
+    .toolbar-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     
     /* Fullscreen viewer */
     #fullscreen-viewer {
-      position: fixed;
-      inset: 0;
-      background-color: var(--background-dark);
-      z-index: 100;
-      display: none;
-      padding: 2rem;
-      justify-content: center;
-      align-items: center;
+      position: fixed; inset: 0; background-color: var(--background-dark); z-index: 1100;
+      display: none; padding: 2rem; justify-content: center; align-items: center;
     }
     #fullscreen-viewer.active { display: flex; }
-    #fullscreen-content {
-      width: 100%;
-      max-width: 800px;
-      height: 100%;
-      overflow-y: auto;
-    }
-    #fullscreen-close-btn {
-      position: absolute;
-      top: 2rem;
-      right: 2rem;
-      color: white;
-      font-size: 2rem;
-      cursor: pointer;
-      font-family: sans-serif;
-    }
+    #fullscreen-content { width: 100%; max-width: 800px; height: 100%; overflow-y: auto; }
+    #fullscreen-close-btn { position: absolute; top: 2rem; right: 2rem; color: white; font-size: 2rem; cursor: pointer; font-family: sans-serif; }
 
-    /* Info Overlay Styles */
+    /* --- All-at-Once Tutorial Styles --- */
     #info-overlay {
-        color: white;
-        font-family: monospace;
-        z-index: 200;
+        position: fixed; inset: 0;
+        background-color: rgba(0,0,0,0.7);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
         opacity: 0;
         visibility: hidden;
         transition: opacity 0.4s ease, visibility 0.4s;
     }
-    #info-overlay.visible {
-        opacity: 1;
-        visibility: visible;
-    }
-
-    .info-label {
+    #info-overlay.visible { opacity: 1; visibility: visible; }
+    
+    .tour-card {
         position: absolute;
-        background-color: var(--purple-accent);
-        padding: 10px 15px;
-        border-radius: 8px;
+        background-color: var(--panel-background);
         border: 1px solid var(--hover-solar);
-        max-width: 250px;
-        text-align: center;
-        box-shadow: 0 0 15px var(--hover-solar);
-        line-height: 1.4;
-        z-index: 202; /* Above the SVG lines */
-        opacity: 0;
-        transform: translateY(10px);
-        transition: opacity 0.5s ease 0.3s, transform 0.5s ease 0.3s;
-    }
-    #info-overlay.visible .info-label {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    
-    #info-svg-layer {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 201; /* Below labels, above background */
-        pointer-events: none; /* Allow clicks to pass through */
-    }
-    #info-svg-layer line {
-        transition: stroke-dashoffset 0.8s cubic-bezier(0.25, 1, 0.5, 1);
-    }
-
-    .info-highlight {
-        outline: 2px solid var(--hover-solar);
-        box-shadow: 0 0 25px 8px var(--hover-solar) !important; /* Use important to override other shadows */
         border-radius: 12px;
-        transition: all 0.3s ease-in-out;
-        z-index: 205; /* Bring highlighted element to the front */
-        position: relative; /* Needed for z-index to work */
+        padding: 15px;
+        width: 250px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        z-index: 1010;
+        line-height: 1.5;
+        font-size: 14px;
+    }
+    .tour-card::after { /* The arrow */
+        content: '';
+        position: absolute;
+        width: 0; 
+        height: 0; 
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+    }
+    .tour-card.arrow-up::after {
+        bottom: 100%; left: 50%;
+        transform: translateX(-50%);
+        border-bottom: 10px solid var(--hover-solar);
+    }
+     .tour-card.arrow-down::after {
+        top: 100%; left: 50%;
+        transform: translateX(-50%);
+        border-top: 10px solid var(--hover-solar);
+    }
+    .tour-card.arrow-left::after {
+        right: 100%; top: 50%;
+        transform: translateY(-50%);
+        border-right: 10px solid var(--hover-solar);
+        border-top: 10px solid transparent;
+        border-bottom: 10px solid transparent;
+    }
+     .tour-card.arrow-right::after {
+        left: 100%; top: 50%;
+        transform: translateY(-50%);
+        border-left: 10px solid var(--hover-solar);
+        border-top: 10px solid transparent;
+        border-bottom: 10px solid transparent;
     }
     
-    /* Animation for export button feedback */
     @keyframes shake {
-      10%, 90% { transform: translate3d(-1px, 0, 0); }
-      20%, 80% { transform: translate3d(2px, 0, 0); }
-      30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-      40%, 60% { transform: translate3d(4px, 0, 0); }
+      10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); }
     }
-    .shake {
-        animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
-    }
+    .shake { animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both; }
   </style>
 </head>
 <body class="bg-black">
@@ -307,17 +267,15 @@
     <section id="main-view" class="h-screen w-screen flex-shrink-0 flex flex-row">
       <!-- Center Column -->
       <div class="flex-1 flex flex-col h-full overflow-hidden">
-        <div class="top-bar h-10 md:h-16 flex items-center justify-between px-4">
-            <!-- Left side: Home button and Logo -->
+        <div class="top-bar h-10 md:h-16 flex items-center justify-between px-4 relative">
             <div class="flex items-center gap-4">
                  <button onclick="window.location.href='/'" title="Return to Home" class="toolbar-btn w-12 h-12">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                 </button>
                 <h1 class="text-2xl font-bold" style="color:var(--primary-ion);">Joojit</h1>
             </div>
             
-            <!-- Right side: Language, Info, and Constellation Buttons -->
-            <div class="flex items-center gap-2">
+            <div id="top-right-controls" class="flex items-center gap-2">
                  <div class="lang-toggle">
                     <span>PT</span>
                     <label class="toggle-switch">
@@ -327,61 +285,45 @@
                     <span>EN</span>
                 </div>
                 <button id="info-btn" onclick="toggleInfoOverlay()" title="Show Help" class="toolbar-btn w-12 h-12">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
                 </button>
                 <button id="constellation-btn" onclick="window.location.href=`/constellation?lang=${currentLang}`" title="Go to Constellation View" class="toolbar-btn w-12 h-12">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </button>
             </div>
         </div>
         
-        <div id="chat-display-area" class="flex-1 relative overflow-hidden">
-            <div id="viewport" class="absolute inset-0 flex w-[300%] h-full">
-              <div id="spores-window" class="w-screen h-full flex-shrink-0" style="background-color: var(--panel-background);">
-                <div class="window-content">
-                  <div id="spores-output" class="output-area flex flex-col"></div>
-                </div>
-              </div>
-              <div id="spiral-window" class="w-screen h-full flex-shrink-0 bg-black">
-                 <div class="window-content">
-                  <div id="spiral-output" class="output-area flex flex-col"></div>
-                </div>
-              </div>
-              <div id="throttle-window" class="w-screen h-full flex-shrink-0" style="background-color: var(--panel-background);">
-                <div class="window-content">
-                  <div id="throttle-output" class="output-area flex flex-col"></div>
-                </div>
-              </div>
+        <div id="chat-display-area" class="flex-1 relative overflow-y-auto">
+             <div class="window-content h-full">
+              <div id="spiral-output" class="output-area flex flex-col"></div>
             </div>
         </div>
         
         <div class="bg-[#010101] border-t-0 p-2 md:p-4 flex justify-center">
           <div class="input-wrapper">
-              <!-- Left Wing: Memory & Archive -->
               <div id="session-controls" class="button-wing">
                   <button id="new-chat-btn" class="toolbar-btn" data-lang-title="new-chat-title" onclick="newSession()">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
                   </button>
                   <button id="export-btn" class="toolbar-btn" data-lang-title="export-title" onclick="exportLedger()">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                   </button>
                    <button id="clear-all-btn" class="toolbar-btn" data-lang-title="clear-all-title" onclick="clearAllSessions()">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                   </button>
               </div>
 
               <textarea id="chatInput" placeholder="..."></textarea>
 
-              <!-- Right Wing: Action & View -->
-              <div class="button-wing">
+              <div id="action-controls" class="button-wing">
                    <button id="send-btn" class="toolbar-btn" data-lang-title="send-title" onclick="handleMainSubmit()">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                    </button>
                    <button id="clear-btn" class="toolbar-btn" data-lang-title="clear-input-title" onclick="clearInput()">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
                    </button>
                    <button id="fullscreen-btn" class="toolbar-btn" data-lang-title="fullscreen-title" onclick="enterFullscreen()">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
                    </button>
               </div>
           </div>
@@ -395,15 +337,12 @@
     <div id="fullscreen-content" class="output-area flex flex-col"></div>
   </div>
 
-  <!-- Info Overlay -->
-  <div id="info-overlay" class="fixed inset-0 bg-black bg-opacity-80 p-8" onclick="toggleInfoOverlay()">
-      <button class="absolute top-4 right-4 text-white text-5xl font-sans" title="Close Help">&times;</button>
-      <svg id="info-svg-layer"></svg>
-
-      <div data-lang="info-chat" id="label-chat" class="info-label" style="top: 30%; left: 50%; transform: translateX(-50%);"></div>
-      <div data-lang="info-constellation" id="label-constellation" class="info-label" style="top: 15%; right: 25%;"></div>
-      <div data-lang="info-input" id="label-input" class="info-label" style="bottom: 25%; left: 50%; transform: translateX(-50%);"></div>
-      <div data-lang="info-session" id="label-session" class="info-label" style="bottom: 15%; left: 25%; transform: translateX(-50%);"></div>
+  <div id="info-overlay" onclick="toggleInfoOverlay()">
+      <div id="tour-card-chat" class="tour-card" data-lang="info-chat"></div>
+      <div id="tour-card-input" class="tour-card" data-lang="info-input"></div>
+      <div id="tour-card-session" class="tour-card" data-lang="info-session"></div>
+      <div id="tour-card-actions" class="tour-card" data-lang="info-actions"></div>
+      <div id="tour-card-nav" class="tour-card" data-lang="info-nav"></div>
   </div>
 
 
@@ -411,62 +350,44 @@
     // --- LANGUAGE CONTENT ---
     const langContent = {
         pt: {
-            "title": "Joojit - Interface",
-            "new-chat-title": "Novo Chat",
-            "export-title": "Exportar Histórico",
-            "clear-all-title": "Limpar Todos os Chats",
-            "send-title": "Enviar",
-            "clear-input-title": "Limpar Entrada",
+            "title": "Joojit - Interface", "new-chat-title": "Novo Chat", "export-title": "Exportar Histórico",
+            "clear-all-title": "Limpar Todos os Chats", "send-title": "Enviar", "clear-input-title": "Limpar Entrada",
             "fullscreen-title": "Tela Cheia",
             "info-chat": "Este é o histórico do chat. Suas mensagens aparecem à direita e as respostas da IA à esquerda.",
-            "info-constellation": "Alterne para a <strong>Visualização de Constelação</strong> para ver uma visualização 3D do seu diálogo.",
-            "info-input": "Digite sua mensagem aqui. Deslize para a esquerda/direita na área do chat para alternar entre diferentes modelos/modos de IA.",
+            "info-constellation": "Alterne para a Visualização de Constelação para ver uma visualização 3D do seu diálogo.",
+            "info-input": "Digite sua mensagem aqui. Pressione Enter para enviar.",
             "info-session": "Gerencie suas sessões: inicie um novo chat, exporte o histórico ou limpe todos os dados.",
+            "info-actions": "Ações rápidas para enviar sua mensagem, limpar a entrada ou entrar no modo de tela cheia.",
+            "info-nav": "Navegue para a página inicial, alterne o idioma ou veja esta excursão novamente.",
             "confirm-clear-all": "Isso apagará todos os chats salvos. Você tem certeza?",
-            "placeholder-spores": "refletir...",
             "placeholder-spiral": "moldar um pensamento...",
-            "placeholder-throttle": "ignição...",
         },
         en: {
-            "title": "Joojit - Interface",
-            "new-chat-title": "New Chat",
-            "export-title": "Export Ledger",
-            "clear-all-title": "Clear All Chats",
-            "send-title": "Send",
-            "clear-input-title": "Clear Input",
+            "title": "Joojit - Interface", "new-chat-title": "New Chat", "export-title": "Export Ledger",
+            "clear-all-title": "Clear All Chats", "send-title": "Send", "clear-input-title": "Clear Input",
             "fullscreen-title": "Fullscreen View",
             "info-chat": "This is the chat history. Your prompts appear on the right, and AI responses are on the left.",
-            "info-constellation": "Toggle the <strong>Constellation View</strong> to see a 3D visualization of your dialogue.",
-            "info-input": "Type your message here. Swipe left/right on the chat history above to switch between different AI models/modes.",
+            "info-constellation": "Toggle the Constellation View to see a 3D visualization of your dialogue.",
+            "info-input": "Type your message here. Press Enter to send.",
             "info-session": "Manage your sessions: start a new chat, export the history, or clear all data.",
+            "info-actions": "Quick actions to send your message, clear the input, or enter fullscreen mode.",
+            "info-nav": "Navigate home, switch the language, or see this tour again.",
             "confirm-clear-all": "This will erase all saved chats. Are you sure?",
-            "placeholder-spores": "reflect...",
             "placeholder-spiral": "shape a thought...",
-            "placeholder-throttle": "ignite...",
         }
     };
 
     // --- STATE MANAGEMENT ---
-    let currentWindow = 'spiral';
-    let isTransitioning = false;
-    let isInfoOverlayVisible = false;
     let currentLang = 'pt';
 
     // --- DOM ELEMENTS ---
     const langToggle = document.getElementById('lang-toggle-checkbox');
-    const mainContainer = document.querySelector('main');
-    const viewport = document.getElementById('viewport');
     const chatInput = document.getElementById('chatInput');
-    const outputAreas = {
-        spores: document.getElementById('spores-output'),
-        spiral: document.getElementById('spiral-output'),
-        throttle: document.getElementById('throttle-output'),
-    };
+    const outputAreas = { spiral: document.getElementById('spiral-output') };
     const fullscreenViewer = document.getElementById('fullscreen-viewer');
     const fullscreenContent = document.getElementById('fullscreen-content');
     const fullscreenCloseBtn = document.getElementById('fullscreen-close-btn');
     const infoOverlay = document.getElementById('info-overlay');
-    const infoSvgLayer = document.getElementById('info-svg-layer');
     
     // --- LANGUAGE MANAGEMENT ---
     function setLanguage(lang) {
@@ -475,40 +396,21 @@
         document.documentElement.lang = lang;
         document.title = langContent[lang].title;
         
-        // Update text content
         document.querySelectorAll('[data-lang]').forEach(el => {
             const key = el.getAttribute('data-lang');
-            if (langContent[lang][key]) {
-                el.innerHTML = langContent[lang][key];
-            }
+            if (langContent[lang][key]) el.innerHTML = langContent[lang][key];
         });
         
-        // Update titles/tooltips
         document.querySelectorAll('[data-lang-title]').forEach(el => {
             const key = el.getAttribute('data-lang-title');
-            if (langContent[lang][key]) {
-                el.title = langContent[lang][key];
-            }
+            if (langContent[lang][key]) el.title = langContent[lang][key];
         });
 
-        // Update placeholders
-        updatePlaceholders();
-        
+        chatInput.placeholder = langContent[currentLang]['placeholder-spiral'];
         langToggle.checked = (lang === 'en');
     }
 
-    langToggle.addEventListener('change', () => {
-        setLanguage(langToggle.checked ? 'en' : 'pt');
-    });
-
-    function updatePlaceholders() {
-        placeholders = {
-            spores: langContent[currentLang]['placeholder-spores'],
-            spiral: langContent[currentLang]['placeholder-spiral'],
-            throttle: langContent[currentLang]['placeholder-throttle'],
-        };
-        chatInput.placeholder = placeholders[currentWindow];
-    }
+    langToggle.addEventListener('change', () => setLanguage(langToggle.checked ? 'en' : 'pt'));
       
     // --- LOCAL LEDGER SYSTEM ---
     let ledgerStore = JSON.parse(localStorage.getItem("ledgerStore") || "{}");
@@ -520,58 +422,37 @@
       ledgerStore.activeSession = id;
       localStorage.setItem("ledgerStore", JSON.stringify(ledgerStore));
       clearChatUI();
-      console.log("New session started:", id);
     }
 
     function getActiveLedger() {
       if (!ledgerStore.activeSession || !ledgerStore.sessions) return [];
       return ledgerStore.sessions[ledgerStore.activeSession];
     }
-
-    function generateUUID() {
-        if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
-        return 'xxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-          const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-          return v.toString(16);
-        });
-      }
-
-
+    
     function saveTurn(prompt, reply, model, latency) {
       const record = {
-        id: generateUUID(),
+        id: crypto.randomUUID(),
         timestamp: new Date().toISOString(),
-        prompt,
-        reply,
-        model,
-        latency_ms: latency
+        prompt, reply, model, latency_ms: latency
       };
       const activeLedger = getActiveLedger();
       activeLedger.push(record);
       localStorage.setItem("ledgerStore", JSON.stringify(ledgerStore));
     }
-    
+
     function exportLedger() {
       const ledger = getActiveLedger();
       const exportBtn = document.getElementById('export-btn');
 
-      if (!ledger.length) {
+      if (!ledger || ledger.length === 0) {
           exportBtn.classList.add('shake');
           setTimeout(() => exportBtn.classList.remove('shake'), 820);
           return;
       }
-
-      // Proceed with export if ledger is not empty
-      try {
-        fetch("/export", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(ledger)
-        })
-        .then(res => {
-            if (!res.ok) throw new Error("Export failed");
-            return res.blob();
-        })
+      
+      fetch("/export", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(ledger)
+      }).then(res => res.ok ? res.blob() : Promise.reject("Export failed"))
         .then(blob => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -581,55 +462,36 @@
             a.click();
             document.body.removeChild(a);
             setTimeout(() => URL.revokeObjectURL(url), 100);
-        })
-        .catch(err => {
-            console.error("Error exporting ledger:", err);
-            // Optionally, provide user feedback for failed export
-            exportBtn.style.borderColor = 'var(--hover-solar)';
-            setTimeout(() => exportBtn.style.borderColor = '', 2000);
-        });
-      } catch (err) {
-        console.error("Error setting up export:", err);
-      }
+        }).catch(err => console.error("Error exporting ledger:", err));
     }
 
-  
     function clearAllSessions() {
       if (confirm(langContent[currentLang]['confirm-clear-all'])) {
         localStorage.removeItem("ledgerStore");
-        ledgerStore = {}; // Reset the in-memory store
-        newSession(); // Initialize a fresh session state and clear UI
-        console.log("All sessions cleared.");
+        ledgerStore = {};
+        newSession();
       }
     }
-
-    function clearChatUI() {
-        for (const key in outputAreas) {
-            outputAreas[key].innerHTML = '';
-        }
-    }
+    
+    function clearChatUI() { if(outputAreas.spiral) outputAreas.spiral.innerHTML = ''; }
 
     function loadActiveSessionHistory() {
         clearChatUI(); 
         const activeLedger = getActiveLedger();
         if (!activeLedger) return;
-
-        const outputContainer = outputAreas[currentWindow]; 
-
         activeLedger.forEach(turn => {
-            const userPromptElem = document.createElement('div');
-            userPromptElem.className = 'chat-message user-prompt';
-            userPromptElem.textContent = turn.prompt;
-            outputContainer.appendChild(userPromptElem);
+            const userElem = document.createElement('div');
+            userElem.className = 'chat-message user-prompt';
+            userElem.textContent = turn.prompt;
+            outputAreas.spiral.appendChild(userElem);
 
-            const aiResponseElem = document.createElement('div');
-            aiResponseElem.className = 'chat-message ai-response';
-            aiResponseElem.innerHTML = formatAIResponse(turn.reply); // Use formatter for historical messages
-            outputContainer.appendChild(aiResponseElem);
+            const aiElem = document.createElement('div');
+            aiElem.className = 'chat-message ai-response';
+            aiElem.innerHTML = formatAIResponse(turn.reply);
+            outputAreas.spiral.appendChild(aiElem);
         });
-
-        if (outputContainer.children.length > 0) {
-            outputContainer.scrollTop = outputContainer.scrollHeight;
+        if (outputAreas.spiral && outputAreas.spiral.children.length > 0) {
+            outputAreas.spiral.scrollTop = outputAreas.spiral.scrollHeight;
         }
     }
 
@@ -638,69 +500,14 @@
         const urlParams = new URLSearchParams(window.location.search);
         const langFromUrl = urlParams.get('lang');
         const savedLang = localStorage.getItem('joojit-lang') || 'pt';
-        
         setLanguage(langFromUrl || savedLang);
 
-        viewport.style.transition = 'none';
-        viewport.style.transform = 'translateX(-100vw)';
-        updateActiveWindow('spiral');
-        
-        setTimeout(() => {
-            viewport.style.transition = 'transform 1s ease-in-out, opacity 0.4s ease-in-out';
-        }, 50);
-
-        if (!ledgerStore.sessions || !ledgerStore.activeSession) {
-            newSession();
-        } else {
-            loadActiveSessionHistory();
-        }
+        if (!ledgerStore.sessions || !ledgerStore.activeSession) newSession();
+        else loadActiveSessionHistory();
     };
 
-    // --- NAVIGATION LOGIC ---
-    const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-    function updateActiveWindow(windowName) {
-        currentWindow = windowName;
-        updatePlaceholders(); // update placeholder on window change
-        loadActiveSessionHistory();
-    }
-    
-    async function showSpores() {
-        if (isTransitioning || currentWindow === 'spores') return;
-        isTransitioning = true;
-        viewport.style.transition = 'transform 1s ease-in-out';
-        viewport.style.transform = 'translateX(0vw)';
-        updateActiveWindow('spores');
-        await wait(1000);
-        isTransitioning = false;
-    }
-
-    async function showSpiral() {
-        if (isTransitioning || currentWindow === 'spiral') return;
-        isTransitioning = true;
-        viewport.style.transition = 'transform 1s ease-in-out';
-        viewport.style.transform = 'translateX(-100vw)';
-        updateActiveWindow('spiral');
-        await wait(1000);
-        isTransitioning = false;
-    }
-
-    async function showThrottle() {
-        if (isTransitioning || currentWindow === 'throttle') return;
-        isTransitioning = true;
-        viewport.style.transition = 'transform 1s ease-in-out';
-        viewport.style.transform = 'translateX(-200vw)';
-        updateActiveWindow('throttle');
-        await wait(1000);
-        isTransitioning = false;
-    }
-
     // --- TOOLBAR AND INPUT LOGIC ---
-    function clearInput() {
-        chatInput.value = '';
-        chatInput.style.height = '96px';
-    }
-
+    function clearInput() { chatInput.value = ''; chatInput.style.height = '96px'; }
     chatInput.addEventListener('input', () => {
         chatInput.style.height = 'auto';
         chatInput.style.height = (chatInput.scrollHeight) + 'px';
@@ -708,140 +515,127 @@
 
     // --- FULLSCREEN LOGIC ---
     function enterFullscreen() {
-        const currentOutput = outputAreas[currentWindow];
-        fullscreenContent.innerHTML = currentOutput.innerHTML;
+        if(outputAreas.spiral) fullscreenContent.innerHTML = outputAreas.spiral.innerHTML;
         fullscreenViewer.classList.add('active');
         fullscreenContent.scrollTop = fullscreenContent.scrollHeight;
     }
-
-    function exitFullscreen() {
-        fullscreenViewer.classList.remove('active');
-        fullscreenContent.innerHTML = '';
+    function exitFullscreen() { 
+        fullscreenViewer.classList.remove('active'); 
+        fullscreenContent.innerHTML = ''; 
     }
 
-    // --- INFO OVERLAY LOGIC ---
-    const infoElements = {
-        'label-chat': 'chat-display-area',
-        'label-constellation': 'constellation-btn',
-        'label-input': 'chatInput',
-        'label-session': 'session-controls',
-    };
-
-    function drawInfoLines() {
-        infoSvgLayer.innerHTML = ''; // Clear previous lines
-        Object.entries(infoElements).forEach(([labelId, elementId]) => {
-            const label = document.getElementById(labelId);
-            const element = document.getElementById(elementId);
-            if (!label || !element) return;
-
-            const labelRect = label.getBoundingClientRect();
-            const elemRect = element.getBoundingClientRect();
-
-            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            
-            const x1 = labelRect.left + labelRect.width / 2;
-            const y1 = labelRect.top + labelRect.height / 2;
-            let x2, y2;
-
-            // Refine connection points for better visual attachment
-            if (elementId === 'chat-display-area' || elementId === 'chatInput') {
-                x2 = elemRect.left + elemRect.width / 2;
-                y2 = labelRect.top > elemRect.top ? elemRect.bottom : elemRect.top;
-            } else {
-                x2 = elemRect.left + elemRect.width / 2;
-                y2 = elemRect.top + elemRect.height / 2;
+    // --- TUTORIAL OVERLAY LOGIC (REVISED) ---
+    const tourElements = [
+        // This card now appears in the center of the chat area for clarity.
+        { cardId: 'tour-card-chat', targetId: 'chat-display-area', position: 'center' },
+        // This card correctly points down to the text input area.
+        { cardId: 'tour-card-input', targetId: 'chatInput', position: 'top' },
+        // This card now appears ABOVE the session control buttons.
+        { cardId: 'tour-card-session', targetId: 'session-controls', position: 'top' },
+        // This card now appears ABOVE the action control buttons.
+        { cardId: 'tour-card-actions', targetId: 'action-controls', position: 'top' },
+        // This card now correctly aligns under the navigation controls on the top right.
+        { cardId: 'tour-card-nav', targetId: 'top-right-controls', position: 'bottom-right' },
+    ];
+    
+    function positionTourCards() {
+        tourElements.forEach(step => {
+            const card = document.getElementById(step.cardId);
+            const target = document.getElementById(step.targetId);
+            if(!card || !target) {
+                console.warn(`Tour element or target not found for step:`, step);
+                return;
             }
 
-            line.setAttribute('x1', x1);
-            line.setAttribute('y1', y1);
-            line.setAttribute('x2', x2);
-            line.setAttribute('y2', y2);
+            const targetRect = target.getBoundingClientRect();
+            card.className = 'tour-card'; // Reset classes
             
-            line.setAttribute('stroke', 'var(--hover-solar)');
-            line.setAttribute('stroke-width', '2');
+            let top, left, transform = '';
+
+            switch(step.position) {
+                case 'top':
+                    top = targetRect.top - 15;
+                    left = targetRect.left + targetRect.width / 2;
+                    transform = `translate(-50%, -100%)`;
+                    card.classList.add('arrow-down');
+                    break;
+                case 'bottom':
+                    top = targetRect.bottom + 15;
+                    left = targetRect.left + targetRect.width / 2;
+                    transform = `translateX(-50%)`;
+                    card.classList.add('arrow-up');
+                    break;
+                case 'left': // Card is to the LEFT of the target
+                    top = targetRect.top + targetRect.height / 2;
+                    left = targetRect.left - 15;
+                    transform = `translate(-100%, -50%)`;
+                    card.classList.add('arrow-right');
+                    break;
+                case 'right': // Card is to the RIGHT of the target
+                    top = targetRect.top + targetRect.height / 2;
+                    left = targetRect.right + 15;
+                    transform = `translateY(-50%)`;
+                    card.classList.add('arrow-left');
+                    break;
+                case 'bottom-right': // Card is BELOW and aligned to the RIGHT of the target
+                    top = targetRect.bottom + 15;
+                    left = targetRect.right;
+                    transform = `translateX(-100%)`;
+                    card.classList.add('arrow-up');
+                    break;
+                case 'center': // Card is IN THE CENTER of the target
+                    top = targetRect.top + targetRect.height / 2;
+                    left = targetRect.left + targetRect.width / 2;
+                    transform = 'translate(-50%, -50%)';
+                    // No arrow needed for a centered card
+                    break;
+            }
             
-            const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-            line.setAttribute('stroke-dasharray', length);
-            line.setAttribute('stroke-dashoffset', length);
-            
-            infoSvgLayer.appendChild(line);
+            card.style.top = `${top}px`;
+            card.style.left = `${left}px`;
+            card.style.transform = transform;
         });
-        
-        // Trigger the animation
-        setTimeout(() => {
-            infoSvgLayer.querySelectorAll('line').forEach(l => l.style.strokeDashoffset = 0);
-        }, 100);
     }
 
     function toggleInfoOverlay() {
-        isInfoOverlayVisible = !isInfoOverlayVisible;
-        if (isInfoOverlayVisible) {
-            infoOverlay.classList.add('visible');
-            Object.values(infoElements).forEach(id => document.getElementById(id)?.classList.add('info-highlight'));
-            requestAnimationFrame(drawInfoLines);
-        } else {
+        if (infoOverlay.classList.contains('visible')) {
             infoOverlay.classList.remove('visible');
-            Object.values(infoElements).forEach(id => document.getElementById(id)?.classList.remove('info-highlight'));
-            infoSvgLayer.innerHTML = '';
+        } else {
+            setLanguage(currentLang); // Ensure text is up to date
+            positionTourCards();
+            infoOverlay.classList.add('visible');
         }
     }
     
-    window.addEventListener('resize', () => {
-        if (isInfoOverlayVisible) {
-            drawInfoLines();
-        }
-    });
+    window.addEventListener('resize', positionTourCards);
 
-    const API_BASE = window.location.hostname.includes("localhost")
-      ? "http://127.0.0.1:5001"
-      : "https://joojit.com";
+    const API_BASE = "http://127.0.0.1:8080";
     
     // --- RESPONSE FORMATTING ---
     function formatAIResponse(text) {
-        // Safely escape any raw HTML in the text to prevent XSS
         const escapeHTML = (str) => {
-            const p = document.createElement("p");
-            p.textContent = str;
-            return p.innerHTML;
+            const p = document.createElement("p"); p.textContent = str; return p.innerHTML;
         };
-
         const lines = text.split('\n');
-        let html = '';
-        let inList = false;
-
+        let html = ''; let inList = false;
         for (let line of lines) {
             const trimmedLine = line.trim();
             const listMatch = trimmedLine.match(/^(\d+)\.\s*(.*)/);
-
             if (listMatch) {
-                if (!inList) {
-                    html += '<ol class="list-decimal list-inside my-2 space-y-2 pl-2">';
-                    inList = true;
-                }
-                let listItemContent = listMatch[2];
-                let safeContent = escapeHTML(listItemContent);
-                safeContent = safeContent.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
+                if (!inList) { html += '<ol class="list-decimal list-inside my-2 space-y-2 pl-2">'; inList = true; }
+                let safeContent = escapeHTML(listMatch[2]).replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
                 html += `<li>${safeContent}</li>`;
             } else {
-                if (inList) {
-                    html += '</ol>';
-                    inList = false;
-                }
+                if (inList) { html += '</ol>'; inList = false; }
                 if (trimmedLine.length > 0) {
-                    let safeLine = escapeHTML(trimmedLine);
-                    safeLine = safeLine.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
+                    let safeLine = escapeHTML(trimmedLine).replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
                     html += `<p class="my-2">${safeLine}</p>`;
                 }
             }
         }
-
-        if (inList) {
-            html += '</ol>';
-        }
-
-        return html;
+        if (inList) html += '</ol>';
+        return html || escapeHTML(text);
     }
-
 
     // --- API & SUBMISSION LOGIC ---
     async function submitChat(prompt, outputContainer) {
@@ -857,34 +651,27 @@
       outputContainer.scrollTop = outputContainer.scrollHeight;
 
       try {
-        const start = performance.now();
         const res = await fetch(`${API_BASE}/ask`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt })
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt })
         });
-        const latency = performance.now() - start;
         if (!res.ok) throw new Error(`API error: ${res.status}`);
         const data = await res.json();
-        
-        // Use the new formatter
         thinkingIndicator.innerHTML = formatAIResponse(data.reply);
-        saveTurn(prompt, data.reply, data.model || "gpt-4o", Math.round(latency));
-
+        saveTurn(prompt, data.reply, data.model || "gpt-4o", 0);
       } catch (error) {
         console.error("Failed to fetch from API:", error);
         thinkingIndicator.textContent = `Error: Could not connect to the agent.`;
         thinkingIndicator.style.backgroundColor = 'var(--hover-solar)';
         thinkingIndicator.style.color = 'black';
       } finally {
-        outputContainer.scrollTop = outputContainer.scrollHeight;
+        if(outputContainer) outputContainer.scrollTop = outputContainer.scrollHeight;
       }
     }
     
-    async function handleMainSubmit() {
+    function handleMainSubmit() {
         const prompt = chatInput.value.trim();
         if(!prompt) return;
-        submitChat(prompt, outputAreas[currentWindow]);
+        submitChat(prompt, outputAreas.spiral);
         clearInput();
     }
 
@@ -895,7 +682,6 @@
         handleMainSubmit();
       }
     });
-
     fullscreenCloseBtn.addEventListener('click', exitFullscreen);
 
   </script>
