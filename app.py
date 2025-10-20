@@ -119,7 +119,7 @@ def export_conversation():
 
         # Convert list to JSONL string
         jsonl_data = "\n".join(json.dumps(turn, ensure_ascii=False) for turn in data)
-        filename = f"session_{datetime.now().strftime('%Y-%m-%d')}.jsonl"
+        filename = f"session_{datetime.now().strftime('%Y-%m-%dT%H-%M-%S')}.jsonl"
 
         # Prepare response
         response = make_response(jsonl_data)
