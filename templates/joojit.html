@@ -260,6 +260,126 @@
       30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); }
     }
     .shake { animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both; }
+
+    /* Archive Modal Styles */
+    #archive-modal {
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0,0,0,0.8);
+        backdrop-filter: blur(5px);
+        z-index: 2000;
+        display: none; /* Toggled by JS */
+        justify-content: center;
+        align-items: center;
+    }
+    #archive-modal.visible {
+        display: flex;
+    }
+    #archive-content {
+        background-color: var(--panel-background);
+        border: 1px solid var(--primary-ion);
+        border-radius: 12px;
+        width: 90%;
+        max-width: 700px;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    }
+    #archive-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--primary-ion);
+    }
+    #archive-header h2 {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--primary-ion);
+    }
+    #archive-close-btn {
+        background: none;
+        border: none;
+        color: var(--primary-ion);
+        font-size: 2rem;
+        cursor: pointer;
+        line-height: 1;
+        padding: 0;
+    }
+    .archive-search-wrapper {
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--primary-ion);
+    }
+    .archive-search {
+        width: 100%;
+        padding: 8px 12px;
+        display: block;
+        font-size: 1rem;
+        border-radius: 8px;
+        background-color: var(--background-dark);
+        border: 1px solid var(--primary-ion);
+        color: var(--primary-ion);
+        outline: none;
+        transition: all 0.2s ease;
+    }
+    .archive-search:focus {
+        border-color: var(--hover-solar);
+        box-shadow: 0 0 8px var(--hover-solar);
+    }
+    #archive-list {
+        overflow-y: auto;
+        padding: 1rem;
+        flex-grow: 1;
+    }
+    .session-entry {
+        background-color: var(--input-background);
+        border: 1px solid transparent;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.2s ease;
+    }
+    .session-entry:hover {
+        border-color: var(--hover-solar);
+        transform: translateY(-2px);
+    }
+    .session-meta strong {
+        font-size: 1.1rem;
+        color: var(--primary-ion);
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+    .session-meta small {
+        font-size: 0.8rem;
+        color: #aaa;
+    }
+    .session-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    .session-actions button {
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+        border: 1px solid var(--primary-ion);
+        background-color: transparent;
+        color: var(--primary-ion);
+        transition: all 0.2s ease;
+    }
+    .session-actions button:hover {
+        background-color: var(--primary-ion);
+        color: var(--background-dark);
+    }
+    .session-actions button.delete-btn:hover {
+        background-color: #FF4136; /* A danger color */
+        border-color: #FF4136;
+        color: white;
+    }
   </style>
 </head>
 <body class="bg-black">
@@ -275,7 +395,7 @@
                 <h1 class="text-2xl font-bold" style="color:var(--primary-ion);">Joojit</h1>
             </div>
             
-            <div id="top-right-controls" class="flex items-center gap-2">
+            <div id="top-right-controls" class="flex items-center gap-4">
                  <div class="lang-toggle">
                     <span>PT</span>
                     <label class="toggle-switch">
@@ -284,6 +404,9 @@
                     </label>
                     <span>EN</span>
                 </div>
+                <button id="archive-btn" class="toolbar-btn w-12 h-12" data-lang-title="archive-title" onclick="openArchive()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>
+                </button>
                 <button id="info-btn" onclick="toggleInfoOverlay()" title="Show Help" class="toolbar-btn w-12 h-12">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
                 </button>
@@ -305,10 +428,10 @@
                   <button id="new-chat-btn" class="toolbar-btn" data-lang-title="new-chat-title" onclick="newSession()">
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
                   </button>
-                  <button id="export-btn" class="toolbar-btn" data-lang-title="export-title" onclick="exportLedger()">
+                  <button id="save-export-btn" class="toolbar-btn" data-lang-title="save-export-title" onclick="saveAndExportSession()">
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                   </button>
-                   <button id="clear-all-btn" class="toolbar-btn" data-lang-title="clear-all-title" onclick="clearAllSessions()">
+                   <button id="clear-current-btn" class="toolbar-btn" data-lang-title="clear-current-title" onclick="clearCurrentSession()">
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                   </button>
               </div>
@@ -345,34 +468,57 @@
       <div id="tour-card-nav" class="tour-card" data-lang="info-nav"></div>
   </div>
 
+  <div id="archive-modal">
+    <div id="archive-content">
+        <div id="archive-header">
+            <h2 data-lang="archive-header">Chat Archive</h2>
+            <button id="archive-close-btn">&times;</button>
+        </div>
+        <div class="archive-search-wrapper">
+            <input type="text" id="archive-search-input" class="archive-search" />
+        </div>
+        <div id="archive-list">
+            <!-- Session entries will be injected here by JS -->
+        </div>
+    </div>
+  </div>
+
 
   <script>
     // --- LANGUAGE CONTENT ---
     const langContent = {
         pt: {
-            "title": "Joojit - Interface", "new-chat-title": "Novo Chat", "export-title": "Exportar Histórico",
-            "clear-all-title": "Limpar Todos os Chats", "send-title": "Enviar", "clear-input-title": "Limpar Entrada",
-            "fullscreen-title": "Tela Cheia",
+            "title": "Joojit - Interface", "new-chat-title": "Novo Chat",
+            "save-export-title": "Salvar e Exportar", "archive-title": "Arquivo de Chats",
+            "clear-current-title": "Limpar Chat Atual", "send-title": "Enviar",
+            "clear-input-title": "Limpar Entrada", "fullscreen-title": "Tela Cheia",
             "info-chat": "Este é o histórico do chat. Suas mensagens aparecem à direita e as respostas da IA à esquerda.",
             "info-constellation": "Alterne para a Visualização de Constelação para ver uma visualização 3D do seu diálogo.",
             "info-input": "Digite sua mensagem aqui. Pressione Enter para enviar.",
-            "info-session": "Gerencie suas sessões: inicie um novo chat, exporte o histórico ou limpe todos os dados.",
+            "info-session": "Gerencie suas sessões: inicie um novo chat, acesse o arquivo, salve ou limpe o chat atual.",
             "info-actions": "Ações rápidas para enviar sua mensagem, limpar a entrada ou entrar no modo de tela cheia.",
             "info-nav": "Navegue para a página inicial, alterne o idioma ou veja esta excursão novamente.",
-            "confirm-clear-all": "Isso apagará todos os chats salvos. Você tem certeza?",
+            "confirm-clear-current": "Isso limpará as mensagens do chat atual, mas ele permanecerá no seu arquivo. Continuar?",
+            "session-name-prompt": "Dê um nome a esta sessão:", "default-session-name": "Sessão",
+            "archive-header": "Arquivo de Chat",
+            "search-archive-placeholder": "Pesquisar no arquivo...",
             "placeholder-spiral": "moldar um pensamento...",
         },
         en: {
-            "title": "Joojit - Interface", "new-chat-title": "New Chat", "export-title": "Export Ledger",
-            "clear-all-title": "Clear All Chats", "send-title": "Send", "clear-input-title": "Clear Input",
-            "fullscreen-title": "Fullscreen View",
+            "title": "Joojit - Interface", "new-chat-title": "New Chat",
+            "save-export-title": "Save & Export", "archive-title": "Chat Archive",
+            "clear-current-title": "Clear Current Chat", "send-title": "Send",
+            "clear-input-title": "Clear Input", "fullscreen-title": "Fullscreen View",
             "info-chat": "This is the chat history. Your prompts appear on the right, and AI responses are on the left.",
             "info-constellation": "Toggle the Constellation View to see a 3D visualization of your dialogue.",
             "info-input": "Type your message here. Press Enter to send.",
-            "info-session": "Manage your sessions: start a new chat, export the history, or clear all data.",
+            "info-session": "Manage your sessions: start a new chat, access the archive, save, or clear the current chat.",
             "info-actions": "Quick actions to send your message, clear the input, or enter fullscreen mode.",
             "info-nav": "Navigate home, switch the language, or see this tour again.",
-            "confirm-clear-all": "This will erase all saved chats. Are you sure?",
+            "confirm-clear-current": "This will clear the messages from the current chat, but it will remain in your archive. Continue?",
+            "session-name-prompt": "Name this session:", "default-session-name": "Session",
+            "archive-header": "Chat Archive",
+            "search-archive-placeholder": "Search archive...",
             "placeholder-spiral": "shape a thought...",
         }
     };
@@ -388,6 +534,10 @@
     const fullscreenContent = document.getElementById('fullscreen-content');
     const fullscreenCloseBtn = document.getElementById('fullscreen-close-btn');
     const infoOverlay = document.getElementById('info-overlay');
+    const archiveModal = document.getElementById('archive-modal');
+    const archiveList = document.getElementById('archive-list');
+    const archiveCloseBtn = document.getElementById('archive-close-btn');
+    const archiveSearchInput = document.getElementById('archive-search-input');
     
     // --- LANGUAGE MANAGEMENT ---
     function setLanguage(lang) {
@@ -407,26 +557,35 @@
         });
 
         chatInput.placeholder = langContent[currentLang]['placeholder-spiral'];
+        archiveSearchInput.placeholder = langContent[currentLang]['search-archive-placeholder'];
         langToggle.checked = (lang === 'en');
     }
-
-    langToggle.addEventListener('change', () => setLanguage(langToggle.checked ? 'en' : 'pt'));
       
     // --- LOCAL LEDGER SYSTEM ---
     let ledgerStore = JSON.parse(localStorage.getItem("ledgerStore") || "{}");
 
     function newSession() {
-      const id = "session_" + new Date().toISOString();
+      const now = new Date().toISOString();
+      const id = "session_" + now;
       if (!ledgerStore.sessions) ledgerStore.sessions = {};
-      ledgerStore.sessions[id] = [];
+      
+      ledgerStore.sessions[id] = {
+        name: `${langContent[currentLang]['default-session-name']} ${new Date(now).toLocaleString()}`,
+        created_at: now,
+        updated_at: now,
+        turns: []
+      };
+
       ledgerStore.activeSession = id;
       localStorage.setItem("ledgerStore", JSON.stringify(ledgerStore));
       clearChatUI();
     }
 
     function getActiveLedger() {
-      if (!ledgerStore.activeSession || !ledgerStore.sessions) return [];
-      return ledgerStore.sessions[ledgerStore.activeSession];
+      if (!ledgerStore.activeSession || !ledgerStore.sessions || !ledgerStore.sessions[ledgerStore.activeSession]) {
+        return [];
+      }
+      return ledgerStore.sessions[ledgerStore.activeSession].turns;
     }
     
     function saveTurn(prompt, reply, model, latency) {
@@ -435,40 +594,70 @@
         timestamp: new Date().toISOString(),
         prompt, reply, model, latency_ms: latency
       };
-      const activeLedger = getActiveLedger();
-      activeLedger.push(record);
+      
+      const session = ledgerStore.sessions[ledgerStore.activeSession];
+      if (!session) return; 
+
+      session.turns.push(record);
+      session.updated_at = record.timestamp; // Update timestamp
+
       localStorage.setItem("ledgerStore", JSON.stringify(ledgerStore));
     }
 
-    function exportLedger() {
-      const ledger = getActiveLedger();
-      const exportBtn = document.getElementById('export-btn');
+    function saveAndExportSession() {
+        const id = ledgerStore.activeSession;
+        const session = ledgerStore.sessions[id];
+        if (!session) return;
+        
+        const currentName = session.name.startsWith(langContent[currentLang]['default-session-name']) ? "" : session.name;
+        const name = prompt(langContent[currentLang]['session-name-prompt'], currentName);
 
-      if (!ledger || ledger.length === 0) {
-          exportBtn.classList.add('shake');
-          setTimeout(() => exportBtn.classList.remove('shake'), 820);
-          return;
-      }
-      
-      fetch("/export", {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(ledger)
-      }).then(res => res.ok ? res.blob() : Promise.reject("Export failed"))
-        .then(blob => {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            setTimeout(() => URL.revokeObjectURL(url), 100);
-        }).catch(err => console.error("Error exporting ledger:", err));
+        if (name) { // only save and export if a name is provided
+            session.name = name;
+            session.updated_at = new Date().toISOString();
+            localStorage.setItem("ledgerStore", JSON.stringify(ledgerStore));
+            
+            if (archiveModal.classList.contains('visible')) {
+                renderArchiveSessions(archiveSearchInput.value);
+            }
+            
+            exportSingleSession(id, name);
+        }
     }
 
-    function clearAllSessions() {
-      if (confirm(langContent[currentLang]['confirm-clear-all'])) {
-        localStorage.removeItem("ledgerStore");
-        ledgerStore = {};
-        newSession();
+    function exportSingleSession(id, sessionName) {
+        const session = ledgerStore.sessions[id];
+        if (!session || session.turns.length === 0) {
+            const btn = document.getElementById('save-export-btn');
+            if(btn) {
+                btn.classList.add('shake');
+                setTimeout(() => btn.classList.remove('shake'), 820);
+            }
+            return;
+        }
+
+        const blob = new Blob([JSON.stringify(session.turns, null, 2)], { type: 'application/jsonl' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const safeName = (sessionName || session.name || id).replace(/[^a-z0-9_ -]/gi, '_');
+        a.download = `${safeName}.jsonl`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 100);
+    }
+
+
+    function clearCurrentSession() {
+      if (confirm(langContent[currentLang]['confirm-clear-current'])) {
+        const session = ledgerStore.sessions[ledgerStore.activeSession];
+        if (session) {
+          session.turns = [];
+          session.updated_at = new Date().toISOString();
+          localStorage.setItem("ledgerStore", JSON.stringify(ledgerStore));
+          clearChatUI();
+        }
       }
     }
     
@@ -476,9 +665,9 @@
 
     function loadActiveSessionHistory() {
         clearChatUI(); 
-        const activeLedger = getActiveLedger();
-        if (!activeLedger) return;
-        activeLedger.forEach(turn => {
+        const activeTurns = getActiveLedger();
+        if (!activeTurns) return;
+        activeTurns.forEach(turn => {
             const userElem = document.createElement('div');
             userElem.className = 'chat-message user-prompt';
             userElem.textContent = turn.prompt;
@@ -494,6 +683,87 @@
         }
     }
 
+    function migrateLedgerSchema() {
+        if (!ledgerStore.sessions) return;
+        let needsUpdate = false;
+        for (const id in ledgerStore.sessions) {
+            if (Array.isArray(ledgerStore.sessions[id])) {
+                needsUpdate = true;
+                const turns = ledgerStore.sessions[id];
+                const creationDate = (turns.length > 0) ? turns[0].timestamp : new Date().toISOString();
+                ledgerStore.sessions[id] = {
+                    name: `Session ${new Date(creationDate).toLocaleString()}`,
+                    created_at: creationDate,
+                    updated_at: (turns.length > 0) ? turns[turns.length-1].timestamp : creationDate,
+                    turns: turns
+                };
+            }
+        }
+        if (needsUpdate) {
+            localStorage.setItem("ledgerStore", JSON.stringify(ledgerStore));
+        }
+    }
+
+    // --- ARCHIVE LOGIC ---
+    function renderArchiveSessions(query = "") {
+        const lowerCaseQuery = query.toLowerCase();
+        const sessions = Object.entries(ledgerStore.sessions || {})
+            .filter(([id, s]) => {
+                if (!query) return true;
+                return (
+                    (s.name && s.name.toLowerCase().includes(lowerCaseQuery)) ||
+                    (s.turns && s.turns.some(t =>
+                        t.prompt?.toLowerCase().includes(lowerCaseQuery) ||
+                        t.reply?.toLowerCase().includes(lowerCaseQuery)
+                    ))
+                );
+            })
+            .sort((a, b) => new Date(b[1].updated_at) - new Date(a[1].updated_at));
+
+        archiveList.innerHTML = sessions.map(([id, s]) => `
+            <div class="session-entry" data-session-id="${id}">
+                <div class="session-meta">
+                    <strong>${s.name || id}</strong>
+                    <div>
+                        <small>Updated: ${new Date(s.updated_at).toLocaleString()}</small>
+                    </div>
+                </div>
+                <div class="session-actions">
+                    <button onclick="loadSession('${id}')">Load</button>
+                    <button onclick="exportSingleSession('${id}')">Export</button>
+                    <button class="delete-btn" onclick="deleteSession('${id}')">Delete</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function openArchive() {
+        archiveSearchInput.value = '';
+        renderArchiveSessions();
+        archiveModal.classList.add('visible');
+    }
+
+    function loadSession(id) {
+        ledgerStore.activeSession = id;
+        localStorage.setItem("ledgerStore", JSON.stringify(ledgerStore));
+        loadActiveSessionHistory();
+        archiveModal.classList.remove('visible');
+    }
+
+    function deleteSession(id) {
+        if (id === ledgerStore.activeSession) {
+            alert("You cannot delete the currently active session. Please load another session or create a new one first.");
+            return;
+        }
+
+        const sessionName = ledgerStore.sessions[id]?.name || 'this session';
+        if (confirm(`Are you sure you want to permanently delete "${sessionName}"? This cannot be undone.`)) {
+            delete ledgerStore.sessions[id];
+            localStorage.setItem("ledgerStore", JSON.stringify(ledgerStore));
+            renderArchiveSessions(archiveSearchInput.value); // Refresh the list with current filter
+        }
+    }
+
     // --- INITIALIZATION ---
     window.onload = function() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -501,8 +771,13 @@
         const savedLang = localStorage.getItem('joojit-lang') || 'pt';
         setLanguage(langFromUrl || savedLang);
 
-        if (!ledgerStore.sessions || !ledgerStore.activeSession) newSession();
-        else loadActiveSessionHistory();
+        migrateLedgerSchema();
+
+        if (!ledgerStore.sessions || !ledgerStore.activeSession || !ledgerStore.sessions[ledgerStore.activeSession]) {
+          newSession();
+        } else {
+          loadActiveSessionHistory();
+        }
     };
 
     // --- TOOLBAR AND INPUT LOGIC ---
@@ -523,17 +798,12 @@
         fullscreenContent.innerHTML = ''; 
     }
 
-    // --- TUTORIAL OVERLAY LOGIC (REVISED) ---
+    // --- TUTORIAL OVERLAY LOGIC ---
     const tourElements = [
-        // This card now appears in the center of the chat area for clarity.
         { cardId: 'tour-card-chat', targetId: 'chat-display-area', position: 'center' },
-        // This card correctly points down to the text input area.
         { cardId: 'tour-card-input', targetId: 'chatInput', position: 'top' },
-        // This card now appears ABOVE the session control buttons.
         { cardId: 'tour-card-session', targetId: 'session-controls', position: 'top' },
-        // This card now appears ABOVE the action control buttons.
         { cardId: 'tour-card-actions', targetId: 'action-controls', position: 'top' },
-        // This card now correctly aligns under the navigation controls on the top right.
         { cardId: 'tour-card-nav', targetId: 'top-right-controls', position: 'bottom-right' },
     ];
     
@@ -541,10 +811,7 @@
         tourElements.forEach(step => {
             const card = document.getElementById(step.cardId);
             const target = document.getElementById(step.targetId);
-            if(!card || !target) {
-                console.warn(`Tour element or target not found for step:`, step);
-                return;
-            }
+            if(!card || !target) return;
 
             const targetRect = target.getBoundingClientRect();
             card.className = 'tour-card'; // Reset classes
@@ -553,61 +820,35 @@
 
             switch(step.position) {
                 case 'top':
-                    top = targetRect.top - 15;
-                    left = targetRect.left + targetRect.width / 2;
-                    transform = `translate(-50%, -100%)`;
-                    card.classList.add('arrow-down');
-                    break;
+                    top = targetRect.top - 15; left = targetRect.left + targetRect.width / 2;
+                    transform = `translate(-50%, -100%)`; card.classList.add('arrow-down'); break;
                 case 'bottom':
-                    top = targetRect.bottom + 15;
-                    left = targetRect.left + targetRect.width / 2;
-                    transform = `translateX(-50%)`;
-                    card.classList.add('arrow-up');
-                    break;
-                case 'left': // Card is to the LEFT of the target
-                    top = targetRect.top + targetRect.height / 2;
-                    left = targetRect.left - 15;
-                    transform = `translate(-100%, -50%)`;
-                    card.classList.add('arrow-right');
-                    break;
-                case 'right': // Card is to the RIGHT of the target
-                    top = targetRect.top + targetRect.height / 2;
-                    left = targetRect.right + 15;
-                    transform = `translateY(-50%)`;
-                    card.classList.add('arrow-left');
-                    break;
-                case 'bottom-right': // Card is BELOW and aligned to the RIGHT of the target
-                    top = targetRect.bottom + 15;
-                    left = targetRect.right;
-                    transform = `translateX(-100%)`;
-                    card.classList.add('arrow-up');
-                    break;
-                case 'center': // Card is IN THE CENTER of the target
-                    top = targetRect.top + targetRect.height / 2;
-                    left = targetRect.left + targetRect.width / 2;
-                    transform = 'translate(-50%, -50%)';
-                    // No arrow needed for a centered card
-                    break;
+                    top = targetRect.bottom + 15; left = targetRect.left + targetRect.width / 2;
+                    transform = `translateX(-50%)`; card.classList.add('arrow-up'); break;
+                case 'left':
+                    top = targetRect.top + targetRect.height / 2; left = targetRect.left - 15;
+                    transform = `translate(-100%, -50%)`; card.classList.add('arrow-right'); break;
+                case 'right':
+                    top = targetRect.top + targetRect.height / 2; left = targetRect.right + 15;
+                    transform = `translateY(-50%)`; card.classList.add('arrow-left'); break;
+                case 'bottom-right':
+                    top = targetRect.bottom + 15; left = targetRect.right;
+                    transform = `translateX(-100%)`; card.classList.add('arrow-up'); break;
+                case 'center':
+                    top = targetRect.top + targetRect.height / 2; left = targetRect.left + targetRect.width / 2;
+                    transform = 'translate(-50%, -50%)'; break;
             }
-            
-            card.style.top = `${top}px`;
-            card.style.left = `${left}px`;
-            card.style.transform = transform;
+            card.style.top = `${top}px`; card.style.left = `${left}px`; card.style.transform = transform;
         });
     }
 
     function toggleInfoOverlay() {
-        if (infoOverlay.classList.contains('visible')) {
-            infoOverlay.classList.remove('visible');
-        } else {
-            setLanguage(currentLang); // Ensure text is up to date
-            positionTourCards();
-            infoOverlay.classList.add('visible');
+        if (infoOverlay.classList.contains('visible')) infoOverlay.classList.remove('visible');
+        else {
+            setLanguage(currentLang); positionTourCards(); infoOverlay.classList.add('visible');
         }
     }
     
-    window.addEventListener('resize', positionTourCards);
-
     const API_BASE = "";
     
     // --- RESPONSE FORMATTING ---
@@ -675,6 +916,7 @@
     }
 
     // --- EVENT LISTENERS ---
+    langToggle.addEventListener('change', () => setLanguage(langToggle.checked ? 'en' : 'pt'));
     chatInput.addEventListener("keydown", function(event) {
       if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
@@ -682,6 +924,12 @@
       }
     });
     fullscreenCloseBtn.addEventListener('click', exitFullscreen);
+    archiveCloseBtn.addEventListener('click', () => archiveModal.classList.remove('visible'));
+    archiveSearchInput.addEventListener('input', (e) => renderArchiveSessions(e.target.value));
+    window.addEventListener('resize', positionTourCards);
+    window.addEventListener("beforeunload", () => {
+        localStorage.setItem("ledgerStore", JSON.stringify(ledgerStore));
+    });
 
   </script>
 </body>
