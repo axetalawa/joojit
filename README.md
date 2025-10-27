@@ -1,12 +1,8 @@
----
-
 # 🪞 Joojit  
 ### Conversational Ledger & Cognitive Mirror System  
 *by Mute Logic Lab — Salvador, Bahia (2025)*
 
 > *A browser that dreams of its own thoughts.*
-
----
 
 ## ✴ Overview
 
