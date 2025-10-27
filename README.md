@@ -4,7 +4,7 @@
 
 > *A browser that dreams of its own thoughts.*
 
-## ✴ Overview
+## Overview
 
 **Joojit** is a browser-based cognitive interface that transforms chat sessions into recursive visualizations.  
 It functions as both a **conversation ledger** and a **semantic mirror** — recording, analyzing, and rendering the geometry of dialogue itself.
